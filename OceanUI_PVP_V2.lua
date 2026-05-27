@@ -530,7 +530,7 @@ do
 
         -- Internal state that mirrors Drawing object properties
         local dotColor = Color3.new(1,1,1)
-        local dotTrans = 0
+        local dotTrans = 1
         local dotOutlineColor = Color3.new(0,0,0)
         local stroke  -- UIStroke for Filled=false squares
 
@@ -563,10 +563,10 @@ do
                 elseif i == 'Transparency' then
                     dotTrans = v
                     if class == 'Text' then
-                        pcall(function() inst.TextTransparency = v end)
+                        pcall(function() inst.TextTransparency = 1 - v end)
                     else
                         if not stroke then
-                            pcall(function() inst.BackgroundTransparency = v end)
+                            pcall(function() inst.BackgroundTransparency = 1 - v end)
                         end
                     end
                 elseif i == 'OutlineColor' then
@@ -608,7 +608,7 @@ do
                                 stroke.Parent = inst
                             end
                         else
-                            pcall(function() inst.BackgroundTransparency = dotTrans end)
+                            pcall(function() inst.BackgroundTransparency = 1 - dotTrans end)
                             if stroke then stroke.Parent = nil stroke = nil end
                         end
                     end
