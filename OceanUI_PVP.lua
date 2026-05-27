@@ -4735,6 +4735,14 @@ function library:init()
 
     self:SetTheme(library.theme);
     self:SetOpen(true);
+
+    library.flags.watermark_enabled = true
+    library.watermark:Update()
+
+    task.delay(0.5, function()
+        self:SendNotification(self.cheatname .. ' loaded', 3)
+    end)
+
     self.hasInit = true
 
 end
@@ -4820,7 +4828,7 @@ function library:CreateSettingsTab(menu)
     end});
 
     mainSection:AddSeparator({text = 'Watermark'})
-    mainSection:AddToggle({text = 'Enabled', flag = 'watermark_enabled'});
+    mainSection:AddToggle({text = 'Enabled', flag = 'watermark_enabled', state = true});
     mainSection:AddList({text = 'Position', flag = 'watermark_pos', selected = 'Custom', values = {'Top', 'Top Left', 'Top Right', 'Bottom Left', 'Bottom Right', 'Custom'}, callback = function(val)
         library.watermark.lock = val;
     end})
