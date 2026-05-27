@@ -618,6 +618,7 @@ do
                     if class == 'Text' then
                         pcall(function()
                             inst.TextXAlignment = v and Enum.TextXAlignment.Center or Enum.TextXAlignment.Left
+                            inst.AnchorPoint = v and Vector2.new(0.5, 0) or Vector2.new(0, 0)
                         end)
                     end
                 elseif i == 'Font' then
@@ -877,6 +878,7 @@ function library:init()
     screenGui.Name = 'OceanUI'
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
     screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
     library.guiRoot = screenGui
     local coreGui = (typeof(cloneref) == 'function' and cloneref(game:GetService('CoreGui'))) or game:GetService('CoreGui')
     screenGui.Parent = (typeof(gethui) == 'function' and gethui()) or coreGui
