@@ -4643,7 +4643,7 @@ function library:init()
                 end
 
                 self.objects.text.Text = table.concat(text,' | ')
-                self.objects.background.Size = newUDim2(0, self.objects.text.TextBounds.X + 14, 0, 22)
+                self.objects.background.Size = newUDim2(0, self.objects.text.TextBounds.X + 14, 0, 25)
 
                 local size = self.objects.background.Object.Size;
                 local screensize = workspace.CurrentCamera.ViewportSize;
@@ -4667,7 +4667,7 @@ function library:init()
             
             objs.background = utility:Draw('Square', {
                 Visible = false;
-                Size = newUDim2(0, 200, 0, 22);
+                Size = newUDim2(0, 200, 0, 25);
                 Position = newUDim2(0,800,0,100);
                 ThemeColor = 'Background';
                 ZIndex = z;
@@ -4697,16 +4697,37 @@ function library:init()
             })
 
             objs.text = utility:Draw('Text', {
-                Position = newUDim2(.5,0,0,3);
+                Position = newUDim2(.5,0,0,4);
                 ThemeColor = 'Primary Text';
                 Text = 'Watermark Text';
-                Size = 15;
+                Size = 17;
                 Font = 0;
                 ZIndex = z+1;
                 Outline = true;
                 Center = true;
                 Parent = objs.background;
             })
+
+            local dragging, mouseStart, objStart
+            utility:Connection(objs.background.MouseButton1Down, function(pos)
+                dragging = true
+                mouseStart = newUDim2(0, pos.X, 0, pos.Y)
+                objStart = objs.background.Position
+                library.watermark.lock = 'custom'
+            end)
+            utility:Connection(button1up, function()
+                dragging = false
+            end)
+            utility:Connection(mousemove, function(pos)
+                if dragging then
+                    local newPos = objStart + newUDim2(0, pos.X, 0, pos.Y) - mouseStart
+                    objs.background.Position = newPos
+                    library.watermark.position = newPos
+                    local sv = workspace.CurrentCamera.ViewportSize
+                    library.flags.watermark_x = math.clamp(newPos.X.Offset / sv.X * 100, 0, 100)
+                    library.flags.watermark_y = math.clamp(newPos.Y.Offset / sv.Y * 100, 0, 100)
+                end
+            end)
 
         end
     end
