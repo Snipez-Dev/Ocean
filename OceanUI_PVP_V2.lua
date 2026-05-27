@@ -17,7 +17,7 @@ local function gs(a)
 end
 
 -- // Variables
-local players, http, runservice, inputservice, tweenService, stats, actionservice = gs('Players'), gs('HttpService'), gs('RunService'), gs('UserInputService'), gs('TweenService'), gs('Stats'), gs('ContextActionService')
+local players, http, runservice, inputservice, tweenService, stats, actionservice, textService = gs('Players'), gs('HttpService'), gs('RunService'), gs('UserInputService'), gs('TweenService'), gs('Stats'), gs('ContextActionService'), gs('TextService')
 local localplayer = players.LocalPlayer
 
 local setByConfig = false
@@ -544,7 +544,12 @@ do
                 elseif i == 'Position' then return drawing.AbsolutePosition
                 elseif i == 'Size' then return class == 'Text' and inst.TextSize or drawing.AbsoluteSize
                 elseif i == 'Visible' then return inst.Visible
-                elseif i == 'TextBounds' then return inst.TextBounds
+                elseif i == 'TextBounds' then
+                    local b = inst.TextBounds
+                    if b.X == 0 and inst.Text ~= '' then
+                        return textService:GetTextSize(inst.Text, inst.TextSize, inst.Font, Vector2.new(math.huge, 50))
+                    end
+                    return b
                 elseif i == '_inst' then return inst
                 elseif i == 'Remove' then return function() pcall(function() inst:Destroy() end) end
                 else
@@ -3455,9 +3460,9 @@ function library:init()
                         })
 
                         objs.text = utility:Draw('Text', {
-                            Position = newUDim2(.5,0,0,0);
-                            ThemeColor = 'Option Text 3';
-                            Size = 17;
+                            Position = newUDim2(.5,0,0,1);
+                            ThemeColor = 'Option Text 1';
+                            Size = 13;
                             Font = 0;
                             ZIndex = z+4;
                             Outline = true;
@@ -3471,13 +3476,13 @@ function library:init()
 
                         utility:Connection(objs.holder.MouseLeave, function()
                             objs.border1.ThemeColor = 'Option Border 1';
-                            objs.text.ThemeColor = self.risky and 'Risky Text' or 'Option Text 3';
+                            objs.text.ThemeColor = self.risky and 'Risky Text' or 'Option Text 1';
                             objs.background.ThemeColor = 'Option Background';
                             objs.background.ThemeColorOffset = 0;
                         end)
 
                         utility:Connection(objs.holder.MouseButton1Up, function()
-                            objs.text.ThemeColor = self.risky and 'Risky Text' or  'Option Text 3';
+                            objs.text.ThemeColor = self.risky and 'Risky Text' or 'Option Text 1';
                             objs.background.ThemeColor = 'Option Background';
                             objs.background.ThemeColorOffset = 0;
                         end)
