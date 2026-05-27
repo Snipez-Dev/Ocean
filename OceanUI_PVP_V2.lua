@@ -1016,6 +1016,9 @@ function library:init()
 
         library.CurrentTooltip = nil;
         tooltipObjects.background.Visible = false
+        if library.watermark then
+            library.watermark.objects.background.Visible = bool and library.flags.watermark_enabled
+        end
     end
 
     function self.UpdateThemeColors()
@@ -1048,13 +1051,13 @@ function library:init()
             local z = self.zindexOrder.notification;
 
             notification.holder = utility:Draw('Square', {
-                Position = newUDim2(0, 0, 0, 75);
+                Position = newUDim2(0, 0, 0, 15);
                 Transparency = 0;
             })
-            
+
             notification.background = utility:Draw('Square', {
                 Size = newUDim2(1,0,1,0);
-                Position = newUDim2(0, -500, 0, 0);
+                Position = newUDim2(0, 500, 0, 0);
                 Parent = notification.holder;
                 ThemeColor = 'Background';
                 ZIndex = z;
@@ -1116,8 +1119,10 @@ function library:init()
         end
 
         task.spawn(function()
+            local notifW = notification.text.TextBounds.X + 20
+            notification.background.Size = newUDim2(0, notifW, 0, 19)
+            notification.width = notifW
             self:UpdateNotifications();
-            notification.background.Size = newUDim2(0, notification.text.TextBounds.X + 20, 0, 19)
             task.wait();
             utility:Tween(notification.background, 'Position', newUDim2(0,0,0, 0), .1);
             task.wait(time);
@@ -1126,7 +1131,7 @@ function library:init()
                     utility:Tween(v, 'Transparency', 0, .15);
                 end
             end
-            utility:Connection(utility:Tween(notification.background, 'Position', newUDim2(0,-500,0, 0), .25).Completed, (function()
+            utility:Connection(utility:Tween(notification.background, 'Position', newUDim2(0,500,0, 0), .25).Completed, (function()
                 notification:Remove();
             end))
         end)
@@ -1134,9 +1139,11 @@ function library:init()
     end
 
     function self:UpdateNotifications()
+        local sv = workspace.CurrentCamera.ViewportSize
         local i = 0
         for v in next, self.notifications do
-            utility:Tween(v.holder, 'Position', newUDim2(0,0,0, 75 + (i * 30)), .15)
+            local w = v.width or 200
+            utility:Tween(v.holder, 'Position', newUDim2(0, sv.X - w - 15, 0, 15 + (i * 30)), .15)
             i += 1
         end
     end
@@ -4781,7 +4788,7 @@ function library:init()
                 {'00:00:00', true},
                 {'M, D, Y', true},
             };
-            lock = 'Top Right';
+            lock = 'Top Left';
             position = newUDim2(0,0,0,0);
             refreshrate = 25;
         }
