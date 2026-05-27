@@ -990,14 +990,19 @@ function library:init()
     
     function self:SetOpen(bool)
         self.open = bool
-        screenGui.Enabled = bool
 
         if bool then
+            screenGui.Enabled = true
             actionservice:BindAction('OceanUIInput',
                 function() return Enum.ContextActionResult.Sink end,
                 false, unpack(Enum.PlayerActions:GetEnumItems()))
         else
             actionservice:UnbindAction('OceanUIInput')
+            task.delay(0.15, function()
+                if not library.open then
+                    screenGui.Enabled = false
+                end
+            end)
         end
 
         for _,window in next, self.windows do
@@ -4851,7 +4856,7 @@ function library:init()
 
             objs.text = utility:Draw('Text', {
                 Position = newUDim2(.5,0,0,4);
-                ThemeColor = 'Primary Text';
+                Color = Color3.new(1,1,1);
                 Text = 'Watermark Text';
                 Size = 16;
                 Font = 0;
@@ -4861,11 +4866,11 @@ function library:init()
                 Parent = objs.background;
             })
 
-            local dragging, mouseStart, objStart
+            local dragging, dragOffset
             utility:Connection(objs.background.MouseButton1Down, function(pos)
                 dragging = true
-                mouseStart = newUDim2(0, pos.X, 0, pos.Y)
-                objStart = objs.background.Position
+                local absPos = objs.background.Object.Position
+                dragOffset = newVector2(pos.X - absPos.X, pos.Y - absPos.Y)
                 library.watermark.lock = 'custom'
             end)
             utility:Connection(button1up, function()
@@ -4873,12 +4878,14 @@ function library:init()
             end)
             utility:Connection(mousemove, function(pos)
                 if dragging then
-                    local newPos = objStart + newUDim2(0, pos.X, 0, pos.Y) - mouseStart
+                    local sv = workspace.CurrentCamera.ViewportSize
+                    local newX = math.clamp(pos.X - dragOffset.X, 0, sv.X)
+                    local newY = math.clamp(pos.Y - dragOffset.Y, 0, sv.Y)
+                    library.flags.watermark_x = newX / sv.X * 100
+                    library.flags.watermark_y = newY / sv.Y * 100
+                    local newPos = newUDim2(0, newX, 0, newY)
                     objs.background.Position = newPos
                     library.watermark.position = newPos
-                    local sv = workspace.CurrentCamera.ViewportSize
-                    library.flags.watermark_x = math.clamp(newPos.X.Offset / sv.X * 100, 0, 100)
-                    library.flags.watermark_y = math.clamp(newPos.Y.Offset / sv.Y * 100, 0, 100)
                 end
             end)
 
