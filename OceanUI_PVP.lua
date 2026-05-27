@@ -4618,7 +4618,7 @@ function library:init()
                 {'00:00:00', true},
                 {'M, D, Y', true},
             };
-            lock = 'custom';
+            lock = 'Top Right';
             position = newUDim2(0,0,0,0);
             refreshrate = 25;
         }
@@ -4700,7 +4700,7 @@ function library:init()
                 Position = newUDim2(.5,0,0,4);
                 ThemeColor = 'Primary Text';
                 Text = 'Watermark Text';
-                Size = 17;
+                Size = 16;
                 Font = 0;
                 ZIndex = z+1;
                 Outline = true;
@@ -4850,7 +4850,7 @@ function library:CreateSettingsTab(menu)
 
     mainSection:AddSeparator({text = 'Watermark'})
     mainSection:AddToggle({text = 'Enabled', flag = 'watermark_enabled', state = true});
-    mainSection:AddList({text = 'Position', flag = 'watermark_pos', selected = 'Custom', values = {'Top', 'Top Left', 'Top Right', 'Bottom Left', 'Bottom Right', 'Custom'}, callback = function(val)
+    mainSection:AddList({text = 'Position', flag = 'watermark_pos', selected = 'Top Right', values = {'Top', 'Top Left', 'Top Right', 'Bottom Left', 'Bottom Right', 'Custom'}, callback = function(val)
         library.watermark.lock = val;
     end})
     mainSection:AddSlider({text = 'Custom X', flag = 'watermark_x', suffix = '%', min = 0, max = 100, increment = .1});
