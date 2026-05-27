@@ -4643,7 +4643,7 @@ function library:init()
                 end
 
                 self.objects.text.Text = table.concat(text,' | ')
-                self.objects.background.Size = newUDim2(0, self.objects.text.TextBounds.X + 10, 0, 17)
+                self.objects.background.Size = newUDim2(0, self.objects.text.TextBounds.X + 14, 0, 22)
 
                 local size = self.objects.background.Object.Size;
                 local screensize = workspace.CurrentCamera.ViewportSize;
@@ -4667,7 +4667,7 @@ function library:init()
             
             objs.background = utility:Draw('Square', {
                 Visible = false;
-                Size = newUDim2(0, 200, 0, 17);
+                Size = newUDim2(0, 200, 0, 22);
                 Position = newUDim2(0,800,0,100);
                 ThemeColor = 'Background';
                 ZIndex = z;
@@ -4697,10 +4697,10 @@ function library:init()
             })
 
             objs.text = utility:Draw('Text', {
-                Position = newUDim2(.5,0,0,2);
+                Position = newUDim2(.5,0,0,3);
                 ThemeColor = 'Primary Text';
                 Text = 'Watermark Text';
-                Size = 17;
+                Size = 15;
                 Font = 0;
                 ZIndex = z+1;
                 Outline = true;
