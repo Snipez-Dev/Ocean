@@ -4733,7 +4733,7 @@ function library:init()
     self.targetDistance = self.targetIndicator:AddValue({key = 'Distance :', value = '0m'})
     self.targetTool = self.targetIndicator:AddValue({key = 'Weapon   :', value = 'nil'})
 
-    self:SetTheme(library.theme);
+    self:SetTheme(library.themes[1].theme);
     self:SetOpen(true);
 
     library.flags.watermark_enabled = true
