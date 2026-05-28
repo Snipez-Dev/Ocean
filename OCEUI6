@@ -1761,7 +1761,7 @@ function OceanUI:CreateWindow(config)
 					Enum.ThumbnailSize.Size100x100
 				)
 			end)
-			if ok and thumb then avatarImg.Image = thumb end
+			if ok and type(thumb) == "string" then avatarImg.Image = thumb end
 
 			local execName = "Unknown"
 			pcall(function()
