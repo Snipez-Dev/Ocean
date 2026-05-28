@@ -121,11 +121,11 @@ library.themes = {
             ['Selected Tab Background']   = fromrgb(28,28,28);
             ['Unselected Tab Background'] = fromrgb(10,10,10);
             ['Selected Tab Text']         = fromrgb(255,255,255);
-            ['Unselected Tab Text']       = fromrgb(120,120,120);
+            ['Unselected Tab Text']       = fromrgb(165,165,165);
             ['Section Background']        = fromrgb(10,10,10);
             ['Option Text 1']             = fromrgb(245,245,245);
-            ['Option Text 2']             = fromrgb(190,190,190);
-            ['Option Text 3']             = fromrgb(130,130,130);
+            ['Option Text 2']             = fromrgb(200,200,200);
+            ['Option Text 3']             = fromrgb(165,165,165);
             ['Option Border 1']           = fromrgb(40,40,40);
             ['Option Border 2']           = fromrgb(0,0,0);
             ['Option Background']         = fromrgb(22,22,22);
@@ -4695,7 +4695,7 @@ function library:init()
             end
 
             tab:SetText(tab.text);
-            window:UpdateTabs();
+            task.defer(function() window:UpdateTabs() end)
             return tab;
         end
 
@@ -4794,7 +4794,7 @@ function library:init()
         }
 
         function self.watermark:Update()
-            self.objects.background.Visible = library.flags.watermark_enabled
+            self.objects.background.Visible = library.flags.watermark_enabled and library.open
             if library.flags.watermark_enabled then
                 local date = {os.date('%b',os.time()), os.date('%d',os.time()), os.date('%Y',os.time())}
                 local daySuffix = math.floor(date[2]%10)
