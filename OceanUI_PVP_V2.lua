@@ -483,6 +483,7 @@ do
             inst.TextStrokeTransparency = 1
             inst.TextStrokeColor3 = Color3.new(0,0,0)
             inst.RichText = false
+            inst.AutoLocalize = false
         elseif class == 'Image' then
             inst = newInstance('Frame')
             inst.BackgroundTransparency = 1
@@ -1390,7 +1391,8 @@ function library:init()
 
         ----- Create Objects ----
         do
-            local size = data.size or newUDim2(0, 525, 0, 650);
+            window.size = data.size or newUDim2(0, 525, 0, 650);
+            local size = window.size;
             local position = data.position or newUDim2(0, 250, 0, 150);
             local objs = window.objects;
             local z = library.zindexOrder.window;
@@ -4703,12 +4705,21 @@ function library:init()
             table.sort(self.tabs, function(a,b)
                 return a.order < b.order
             end)
-            local pos = 0;
+
+            local maxWidth = self.size.X.Offset - 4
+            local totalWidth = 0
+            for _,v in next, self.tabs do
+                totalWidth += v.objects.text.TextBounds.X + 14 + 1
+            end
+            local scale = totalWidth > maxWidth and (maxWidth / totalWidth) or 1
+
+            local pos = 0
             for i,v in next, self.tabs do
                 local objs = v.objects;
                 v.selected = v == self.selectedTab;
                 objs.background.ThemeColor = v.selected and 'Selected Tab Background' or 'Unselected Tab Background';
-                objs.background.Size = newUDim2(0, objs.text.TextBounds.X + 14, 1, v.selected and 1 or 0);
+                local tabW = math.floor((objs.text.TextBounds.X + 14) * scale)
+                objs.background.Size = newUDim2(0, tabW, 1, v.selected and 1 or 0);
                 objs.background.Position = newUDim2(0, pos, 0, 0)
 
                 objs.text.ThemeColor = v.selected and 'Selected Tab Text' or 'Unselected Tab Text';
@@ -4716,10 +4727,9 @@ function library:init()
 
                 objs.topBorder.ThemeColor = v.selected and 'Accent' or 'Unselected Tab Background';
 
-                pos += objs.background.Size.X.Offset + 1
+                pos += tabW + 1
 
                 v:UpdateSections();
-
             end
         end
 
