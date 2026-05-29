@@ -784,6 +784,8 @@ function library:init()
         return
     end
 
+    self.toggleKey = Enum.KeyCode.Insert
+
     local tooltipObjects = {};
 
     makefolder(self.cheatname)
@@ -904,7 +906,7 @@ function library:init()
 
     utility:Connection(inputservice.InputBegan, function(input, gpe)
         if self.hasInit then
-            if input.KeyCode == self.toggleKey and not library.opening and not gpe then
+            if input.KeyCode == self.toggleKey and not library.opening then
                 self:SetOpen(not self.open)
                 task.spawn(function()
                     library.opening = true;
@@ -4992,8 +4994,10 @@ function library:CreateSettingsTab(menu)
 
     refreshConfigs()
 
-    mainSection:AddBind({text = 'Open / Close', flag = 'togglebind', nomouse = true, noindicator = true, bind = Enum.KeyCode.End, callback = function()
+    mainSection:AddBind({text = 'Open / Close', flag = 'togglebind', nomouse = true, noindicator = true, bind = Enum.KeyCode.Insert, callback = function()
         library:SetOpen(not library.open)
+    end, keycallback = function(key)
+        library.toggleKey = key
     end});
 
     mainSection:AddButton({text = 'Copy Discord', flag = 'copydiscord', callback = function()
