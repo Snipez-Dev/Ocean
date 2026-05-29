@@ -1127,7 +1127,7 @@ function library:init()
             utility:Tween(notification.background, 'Position', newUDim2(0,0,0, 0), .1);
             task.wait(time);
             for i,v in next, notification do
-                if typeof(v) ~= 'function' then
+                if type(v) == 'table' then
                     utility:Tween(v, 'Transparency', 0, .15);
                 end
             end
