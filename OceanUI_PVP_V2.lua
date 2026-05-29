@@ -889,7 +889,7 @@ function library:init()
     local coreGui = (typeof(cloneref) == 'function' and cloneref(game:GetService('CoreGui'))) or game:GetService('CoreGui')
     screenGui.Parent = (typeof(gethui) == 'function' and gethui()) or coreGui
     screenGui.Enabled = true
-    utility:Instance('ImageButton', {
+    local modalButton = utility:Instance('ImageButton', {
         Parent = screenGui,
         Visible = true,
         Modal = true,
@@ -999,11 +999,13 @@ function library:init()
 
         if bool then
             screenGui.Enabled = true
+            modalButton.Visible = true
             actionservice:BindAction('OceanUIInput',
                 function() return Enum.ContextActionResult.Sink end,
                 false, unpack(Enum.PlayerActions:GetEnumItems()))
         else
             actionservice:UnbindAction('OceanUIInput')
+            modalButton.Visible = false
             task.delay(0.15, function()
                 if not library.open then
                     screenGui.Enabled = false
