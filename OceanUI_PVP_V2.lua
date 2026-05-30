@@ -4994,9 +4994,7 @@ function library:CreateSettingsTab(menu)
 
     refreshConfigs()
 
-    mainSection:AddBind({text = 'Open / Close', flag = 'togglebind', nomouse = true, noindicator = true, bind = Enum.KeyCode.Insert, callback = function()
-        library:SetOpen(not library.open)
-    end, keycallback = function(key)
+    mainSection:AddBind({text = 'Open / Close', flag = 'togglebind', nomouse = true, noindicator = true, bind = Enum.KeyCode.Insert, keycallback = function(key)
         library.toggleKey = key
     end});
 
