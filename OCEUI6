@@ -1,5 +1,3 @@
-
-
 local Players      = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService   = game:GetService("RunService")
@@ -539,10 +537,14 @@ local function makeSlider(parent, minV, maxV, defaultV)
 		setValue(minV + pct*(maxV-minV))
 	end
 
+	local function knobScale(s) tw(knobF,{Size=UDim2.new(0,s,0,s)},0.12):Play() end
+	ib.MouseEnter:Connect(function() if not dragging then knobScale(KNOB_S+3) end end)
+	ib.MouseLeave:Connect(function() if not dragging then knobScale(KNOB_S) end end)
+
 	ib.InputBegan:Connect(function(inp)
 		if inp.UserInputType==Enum.UserInputType.MouseButton1
 		or inp.UserInputType==Enum.UserInputType.Touch then
-			dragging=true; onInput(inp)
+			dragging=true; knobScale(KNOB_S+5); onInput(inp)
 		end
 	end)
 	UIS.InputChanged:Connect(function(inp)
@@ -554,7 +556,7 @@ local function makeSlider(parent, minV, maxV, defaultV)
 	UIS.InputEnded:Connect(function(inp)
 		if inp.UserInputType==Enum.UserInputType.MouseButton1
 		or inp.UserInputType==Enum.UserInputType.Touch then
-			dragging=false
+			dragging=false; knobScale(KNOB_S)
 		end
 	end)
 
@@ -1231,6 +1233,13 @@ end
 local OceanUI = {}
 OceanUI.Themes = THEMES
 
+-- CreateNewWindow panels live alongside the main window and close with it
+local OceanPanels = {}
+local function closeOceanPanels()
+	for _, p in ipairs(OceanPanels) do pcall(function() p:Destroy() end) end
+	table.clear(OceanPanels)
+end
+
 function OceanUI:SetTheme(name)
 	setTheme(name)
 end
@@ -1260,6 +1269,7 @@ function OceanUI:CreateWindow(config)
 
 	local existing = CoreGui:FindFirstChild("OceanUI")
 	if existing then existing:Destroy() end
+	closeOceanPanels()
 
 
 	local sg = inst("ScreenGui",{
@@ -1302,6 +1312,40 @@ function OceanUI:CreateWindow(config)
 	registerThemeUpdater(function()
 		resizeStrk.Color = K.white
 	end, resizeStrk)
+
+	-- transparent line just below the window that doubles as a drag handle to move the UI
+	local grabLine = frame(win,{
+		name="GrabLine", colorKey="white", trans=0.62,
+		size=UDim2.new(0.4, 0, 0, 3),
+		pos=UDim2.new(0.5, 0, 1, 10), anchor=Vector2.new(0.5, 0), z=20,
+	})
+	rnd(grabLine, 99)
+
+	local grabHandle = inst("TextButton",{
+		Name="GrabHandle", BackgroundTransparency=1, Text="", AutoButtonColor=false,
+		Size=UDim2.new(0.4, 24, 0, 22), Position=UDim2.new(0.5, 0, 1, 2), AnchorPoint=Vector2.new(0.5, 0), ZIndex=21,
+	}, win)
+	do
+		local gDrag, gds, gws
+		grabHandle.MouseEnter:Connect(function() tw(grabLine,{BackgroundTransparency=0.25},0.12):Play() end)
+		grabHandle.MouseLeave:Connect(function() if not gDrag then tw(grabLine,{BackgroundTransparency=0.62},0.12):Play() end end)
+		grabHandle.InputBegan:Connect(function(inp)
+			if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+				gDrag=true; gds=inp.Position; gws=win.Position
+			end
+		end)
+		UIS.InputChanged:Connect(function(inp)
+			if gDrag and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
+				local d=inp.Position-gds
+				win.Position=UDim2.new(gws.X.Scale,gws.X.Offset+d.X,gws.Y.Scale,gws.Y.Offset+d.Y)
+			end
+		end)
+		UIS.InputEnded:Connect(function(inp)
+			if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+				gDrag=false; tw(grabLine,{BackgroundTransparency=0.62},0.12):Play()
+			end
+		end)
+	end
 
 	local resizeBtn = inst("TextButton",{
 		BackgroundTransparency=1, Text="",
@@ -1489,6 +1533,7 @@ function OceanUI:CreateWindow(config)
 	closeBtn.MouseButton1Click:Connect(function()
 		if win:GetAttribute("Closing") then return end
 		win:SetAttribute("Closing", true)
+		closeOceanPanels()
 
 		local winScale = Instance.new("UIScale")
 		winScale.Scale = 1
@@ -1508,10 +1553,10 @@ function OceanUI:CreateWindow(config)
 
 	local minOverlay = frame(sg, {
 		name="MinOverlay", colorKey="bg",
-		size=UDim2.new(0, 150, 0, 36),
+		size=UDim2.new(0, 156, 0, 38),
 		pos=UDim2.new(0.5, 0, 0.05, 0), anchor=Vector2.new(0.5, 0.5), z=100
 	})
-	rnd(minOverlay, 18)
+	rnd(minOverlay, 19)
 	brd(minOverlay, "borderHi", 1)
 	minOverlay.Visible = false
 
@@ -1520,13 +1565,13 @@ function OceanUI:CreateWindow(config)
 		size=UDim2.new(1,10,1,10), pos=UDim2.new(0,-5,0,-5),
 		z=99,
 	})
-	rnd(minGlow, 22)
+	rnd(minGlow, 23)
 
 	local dragArea = inst("TextButton", {
 		Name="DragArea", BackgroundTransparency=1, Text="",
 		Size=UDim2.new(0, 40, 1, 0), Position=UDim2.new(0,0,0,0), ZIndex=102, AutoButtonColor=false
 	}, minOverlay)
-	
+
 	if lucide then
 		img(dragArea, {
 			img=getLucide("move", 16), colorKey="sub",
@@ -1536,7 +1581,7 @@ function OceanUI:CreateWindow(config)
 		lbl(dragArea,{text="+",font=Enum.Font.GothamMedium,size=16,colorKey="sub",sz=UDim2.fromScale(1,1),xa=Enum.TextXAlignment.Center,ya=Enum.TextYAlignment.Center,z=103})
 	end
 
-	frame(minOverlay,{name="Sep", colorKey="border", size=UDim2.new(0,1,0,20), pos=UDim2.new(0,40,0.5,0), anchor=Vector2.new(0,0.5), z=102})
+	frame(minOverlay,{name="Sep", colorKey="border", size=UDim2.new(0,1,0,18), pos=UDim2.new(0,40,0.5,0), anchor=Vector2.new(0,0.5), z=102})
 
 	local clickArea = inst("TextButton", {
 		Name="ClickArea", BackgroundTransparency=1, Text="",
@@ -1549,10 +1594,10 @@ function OceanUI:CreateWindow(config)
 			sz=UDim2.new(0,16,0,16), pos=UDim2.new(0,10,0.5,0), anchor=Vector2.new(0,0.5), z=103
 		})
 	end
-	
+
 	lbl(clickArea, {
 		text="Open Ocean", font=Enum.Font.GothamMedium, size=12, colorKey="white",
-		sz=UDim2.new(1,-32,1,0), pos=UDim2.new(0, (lucide and 34 or 10),0,0), xa=Enum.TextXAlignment.Left, z=103
+		sz=UDim2.new(1,-34,1,0), pos=UDim2.new(0, (lucide and 33 or 10),0,0), xa=Enum.TextXAlignment.Left, z=103
 	})
 
 	local savedMinPos = UDim2.new(0.5, 0, 0.05, 0)
@@ -1845,7 +1890,7 @@ function OceanUI:CreateWindow(config)
 	local tabCount = 0
 	local tagCount = 0
 
-	function Window:CreateTag(text, bgColor, textColor)
+	function Window:CreateTag(text, bgColor, textColor, iconName)
 		tagCount = tagCount + 1
 		local tWrap = frame(tagContainer,{
 			name="Tag_"..text, color=bgColor or Color3.fromRGB(60, 120, 210),
@@ -1854,18 +1899,30 @@ function OceanUI:CreateWindow(config)
 		tWrap.AutomaticSize = Enum.AutomaticSize.X
 		tWrap.LayoutOrder = tagCount
 		rnd(tWrap, 4)
-		
-		local tLbl = lbl(tWrap,{
-			text=text, font=Enum.Font.GothamBold, size=11,
-			color=textColor, colorKey=not textColor and "white" or nil,
-			sz=UDim2.new(0,0,1,0), pos=UDim2.new(0,0,0,-1), z=7,
-			xa=Enum.TextXAlignment.Center,
-		})
-		tLbl.AutomaticSize = Enum.AutomaticSize.X
-		
+		inst("UIListLayout",{
+			FillDirection=Enum.FillDirection.Horizontal, SortOrder=Enum.SortOrder.LayoutOrder,
+			VerticalAlignment=Enum.VerticalAlignment.Center, Padding=UDim.new(0,3),
+		}, tWrap)
 		inst("UIPadding",{
 			PaddingLeft=UDim.new(0,6), PaddingRight=UDim.new(0,6)
 		}, tWrap)
+
+		if iconName and lucide then
+			local ic = img(tWrap,{
+				name="Icon", img=getLucide(iconName, 12),
+				color=textColor, colorKey=not textColor and "white" or nil,
+				sz=UDim2.new(0,13,0,13), z=7,
+			})
+			ic.LayoutOrder = 0
+		end
+
+		local tLbl = lbl(tWrap,{
+			text=text, font=Enum.Font.GothamBold, size=11,
+			color=textColor, colorKey=not textColor and "white" or nil,
+			sz=UDim2.new(0,0,1,0), z=7, xa=Enum.TextXAlignment.Center,
+		})
+		tLbl.AutomaticSize = Enum.AutomaticSize.X
+		tLbl.LayoutOrder = 1
 	end
 
 	function Window:AddTab(tabName, iconName)
@@ -1964,6 +2021,10 @@ function OceanUI:CreateWindow(config)
 			})
 			r.LayoutOrder = rowCounter
 
+			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
+			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
+
 			local textOffset = (iconName and lucide) and 30 or 0
 
 			if iconName and lucide then
@@ -2001,6 +2062,10 @@ function OceanUI:CreateWindow(config)
 				size=UDim2.new(1,0,0,60), z=7,
 			})
 			r.LayoutOrder = rowCounter
+
+			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
+			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
 
 			local textOffset = (iconName and lucide) and 30 or 0
 
@@ -2533,6 +2598,7 @@ function OceanUI:CreateWindow(config)
 	function Window:Destroy()
 		if win:GetAttribute("Closing") then return end
 		win:SetAttribute("Closing", true)
+		closeOceanPanels()
 
 		local winScale = Instance.new("UIScale")
 		winScale.Scale = 1
@@ -2725,15 +2791,13 @@ function OceanUI:CreateNewWindow(config)
 	local width = (config.Size and config.Size[1]) or 300
 	local title = config.Title or "Panel"
 
-	-- PlayerGui needs no Plugin capability, so info panels stay reachable from the
-	-- update loops/event threads that can't touch CoreGui or gethui on some executors
+	-- same stealth parent chain as the main window: gethui -> cloneref(CoreGui) -> CoreGui
 	local parent = CoreGui
 	pcall(function()
-		local pg = player:FindFirstChild("PlayerGui")
-		if pg then
-			parent = pg
-		elseif typeof(gethui) == "function" then
+		if typeof(gethui) == "function" then
 			parent = gethui()
+		elseif typeof(cloneref) == "function" then
+			parent = cloneref(CoreGui)
 		end
 	end)
 
@@ -2742,6 +2806,7 @@ function OceanUI:CreateNewWindow(config)
 		IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		DisplayOrder = 998,
 	}, parent)
+	OceanPanels[#OceanPanels + 1] = sg
 
 	local card = frame(sg, {
 		name = "Card", trans = 1,
