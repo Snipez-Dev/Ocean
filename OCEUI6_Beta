@@ -1997,7 +1997,7 @@ function OceanUI:CreateWindow(config)
 		inst("UIListLayout",{
 			FillDirection=Enum.FillDirection.Vertical,
 			SortOrder=Enum.SortOrder.LayoutOrder,
-			Padding=UDim.new(0,0),
+			Padding=UDim.new(0,6),
 		},scroll)
 
 		if sidebar then
@@ -2049,21 +2049,21 @@ function OceanUI:CreateWindow(config)
 			rowCounter = rowCounter + 1
 			local rowH = subtitle and 54 or 42
 			local r = frame(scroll,{
-				name="Row_"..title, colorKey="bg", trans=1,
+				name="Row_"..title, colorKey="surface", trans=0.4,
 				size=UDim2.new(1,0,0,rowH), z=7,
 			})
 			r.LayoutOrder = rowCounter
+			rnd(r, 8)
+			pad(r, 14, 14, 0, 0)
+			r.MouseEnter:Connect(function() tw(r,{BackgroundTransparency=0.15},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(r,{BackgroundTransparency=0.4},0.12):Play() end)
 
-			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
-			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
-			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
-
-			local textOffset = (iconName and lucide) and 30 or 0
+			local textOffset = (iconName and lucide) and 32 or 0
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=8,
+					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,6,0.5,0), anchor=Vector2.new(0,0.5), z=8,
 				})
 			end
 
@@ -2079,45 +2079,33 @@ function OceanUI:CreateWindow(config)
 				})
 			end
 
-			frame(r,{
-				name="Div", colorKey="border",
-				size=UDim2.new(1,0,0,1),
-				pos=UDim2.new(0,0,1,-1), z=8,
-			})
-
 			return r
 		end
 
 		local function makeSliderRow(title, iconName)
 			rowCounter = rowCounter + 1
 			local r = frame(scroll,{
-				name="SlRow_"..title, colorKey="bg", trans=1,
+				name="SlRow_"..title, colorKey="surface", trans=0.4,
 				size=UDim2.new(1,0,0,60), z=7,
 			})
 			r.LayoutOrder = rowCounter
+			rnd(r, 8)
+			pad(r, 14, 14, 0, 0)
+			r.MouseEnter:Connect(function() tw(r,{BackgroundTransparency=0.15},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(r,{BackgroundTransparency=0.4},0.12):Play() end)
 
-			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
-			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
-			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
-
-			local textOffset = (iconName and lucide) and 30 or 0
+			local textOffset = (iconName and lucide) and 32 or 0
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0,10), z=8,
+					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,6,0,10), z=8,
 				})
 			end
 
 			lbl(r,{
 				text=title, font=Enum.Font.GothamMedium, size=14, colorKey="text",
 				sz=UDim2.new(1,0,0,20), pos=UDim2.new(0,textOffset,0,10), z=8,
-			})
-
-			frame(r,{
-				name="Div", colorKey="border",
-				size=UDim2.new(1,0,0,1),
-				pos=UDim2.new(0,0,1,-1), z=8,
 			})
 
 			return r
@@ -2236,14 +2224,8 @@ function OceanUI:CreateWindow(config)
 			end
 
 			local l = lbl(r,{
-				text=text or "", font=Enum.Font.Gotham, size=13, colorKey="sub",
+				text=text or "", font=Enum.Font.GothamMedium, size=13, colorKey="sub",
 				sz=UDim2.new(1,0,1,0), pos=UDim2.new(0,textOffset,0,0), z=8,
-			})
-
-			frame(r,{
-				name="Div", colorKey="border",
-				size=UDim2.new(1,0,0,1),
-				pos=UDim2.new(0,0,1,-1), z=8,
 			})
 
 			return {
