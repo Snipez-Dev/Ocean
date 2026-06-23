@@ -1,23 +1,6 @@
--- Some executors intermittently return a bad HttpGet body or block loadstring,
--- which leaves OceanUI without its methods. Retry until a valid module loads.
-local function loadOcean()
-	local url = "https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/OCEUI6"
-	local lastErr
-	for _ = 1, 8 do
-		local ok, mod = pcall(function()
-			local chunk = loadstring(game:HttpGet(url))
-			return chunk and chunk()
-		end)
-		if ok and type(mod) == "table" and type(mod.CreateWindow) == "function" then
-			return mod
-		end
-		lastErr = mod
-		task.wait(0.4)
-	end
-	error("OceanUI failed to load: " .. tostring(lastErr))
-end
+local url = "https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/OCEUI6"
 
-local OceanUI = loadOcean()
+local OceanUI = loadstring(game:HttpGet(url))()
 
 local Window = OceanUI:CreateWindow({
 	Title = "Showcase",
