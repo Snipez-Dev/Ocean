@@ -2725,12 +2725,15 @@ function OceanUI:CreateNewWindow(config)
 	local width = (config.Size and config.Size[1]) or 300
 	local title = config.Title or "Panel"
 
+	-- PlayerGui needs no Plugin capability, so info panels stay reachable from the
+	-- update loops/event threads that can't touch CoreGui or gethui on some executors
 	local parent = CoreGui
 	pcall(function()
-		if typeof(gethui) == "function" then
+		local pg = player:FindFirstChild("PlayerGui")
+		if pg then
+			parent = pg
+		elseif typeof(gethui) == "function" then
 			parent = gethui()
-		elseif player:FindFirstChild("PlayerGui") then
-			parent = player.PlayerGui
 		end
 	end)
 
