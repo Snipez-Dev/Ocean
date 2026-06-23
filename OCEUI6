@@ -1038,7 +1038,10 @@ local function makeTextBox(parent, placeholder, defaultText)
 	return {
 		frame = box,
 		getText = function() return box.Text end,
-		setText = function(t) box.Text = t end,
+		setText = function(t)
+			box.Text = t
+			changedEvent:Fire(box.Text, false)
+		end,
 		changed = changedEvent.Event,
 	}
 end
@@ -2595,58 +2598,97 @@ function OceanUI:CreateWindow(config)
 	end)
 
 	local HttpService = game:GetService("HttpService")
+	local files = isfolder and makefolder and writefile and readfile and isfile
+
+	local function ensureFolder(dir)
+		if not files then return end
+		local built
+		for _, part in ipairs(string.split(dir, "/")) do
+			built = built and (built .. "/" .. part) or part
+			if not isfolder(built) then pcall(makefolder, built) end
+		end
+	end
+
+	local function pack(value)
+		local t = typeof(value)
+		if t == "EnumItem" then
+			return { kind = "Enum", enum = tostring(value.EnumType), name = value.Name }
+		elseif t == "Color3" then
+			return { kind = "Color3", rgb = { value.R, value.G, value.B } }
+		end
+		return { kind = "Raw", value = value }
+	end
+
+	local function unpack(stored)
+		if type(stored) ~= "table" then return stored, true end
+		if stored.kind == "Enum" then
+			local enum = Enum[stored.enum]
+			return enum and enum[stored.name], enum ~= nil
+		elseif stored.kind == "Color3" then
+			local c = stored.rgb
+			return Color3.new(c[1], c[2], c[3]), true
+		end
+		return stored.value, true
+	end
+
 	Window.ConfigManager = {}
 	local ConfigManager = Window.ConfigManager
 	ConfigManager.Folder = "OceanUI_Configs"
-	
+
 	function ConfigManager:SetFolder(name)
 		self.Folder = name
-		if not isfolder(name) then pcall(makefolder, name) end
+		ensureFolder(name)
 	end
-	
+
+	function ConfigManager:GetConfigs()
+		local list = {}
+		if files and isfolder(self.Folder) then
+			for _, file in ipairs(listfiles(self.Folder)) do
+				local name = file:match("([^/\\]+)%.json$")
+				if name then list[#list + 1] = name end
+			end
+		end
+		return list
+	end
+
+	function ConfigManager:DeleteConfig(name)
+		local path = self.Folder .. "/" .. name .. ".json"
+		if files and isfile(path) and delfile then pcall(delfile, path) end
+	end
+
 	function ConfigManager:CreateConfig(configName)
-		local Config = { Name = configName, Elements = {} }
-		function Config:RegisterElement(id, element)
+		local config = { Name = configName, Elements = {} }
+
+		function config:RegisterElement(id, element)
 			self.Elements[id] = element
 		end
-		function Config:Save()
+
+		function config:Save()
+			if not files then return false end
 			local data = {}
 			for id, el in pairs(self.Elements) do
-				if el and el.Get then
-					local v = el:Get()
-					if typeof(v) == "EnumItem" then
-						data[id] = {type = "KeyCode", value = v.Name}
-					elseif typeof(v) == "Color3" then
-						data[id] = {type = "Color3", r = v.R, g = v.G, b = v.B}
-					else
-						data[id] = {type = "Raw", value = v}
-					end
-				end
+				if el and el.Get then data[id] = pack(el:Get()) end
 			end
-			if not isfolder(ConfigManager.Folder) then pcall(makefolder, ConfigManager.Folder) end
-			pcall(writefile, ConfigManager.Folder .. "/" .. self.Name .. ".json", HttpService:JSONEncode(data))
+			ensureFolder(ConfigManager.Folder)
+			return (pcall(writefile, ConfigManager.Folder .. "/" .. self.Name .. ".json", HttpService:JSONEncode(data)))
 		end
-		function Config:Load()
+
+		function config:Load()
 			local path = ConfigManager.Folder .. "/" .. self.Name .. ".json"
-			if isfile(path) then
-				local s, res = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
-				if s and res then
-					for id, dat in pairs(res) do
-						local el = self.Elements[id]
-						if el and el.Set then
-							if dat.type == "KeyCode" then
-								pcall(function() el:Set(Enum.KeyCode[dat.value]) end)
-							elseif dat.type == "Color3" then
-								pcall(function() el:Set(Color3.new(dat.r, dat.g, dat.b)) end)
-							elseif dat.type == "Raw" then
-								pcall(function() el:Set(dat.value) end)
-							end
-						end
-					end
+			if not (files and isfile(path)) then return false end
+			local ok, data = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+			if not ok or type(data) ~= "table" then return false end
+			for id, stored in pairs(data) do
+				local el = self.Elements[id]
+				if el and el.Set then
+					local value, valid = unpack(stored)
+					if valid then pcall(el.Set, el, value) end
 				end
 			end
+			return true
 		end
-		return Config
+
+		return config
 	end
 
 	function Window:SetTheme(name)
@@ -2658,6 +2700,127 @@ function OceanUI:CreateWindow(config)
 	end
 
 	return Window
+end
+
+function OceanUI:CreateNewWindow(config)
+	config = config or {}
+	local width = (config.Size and config.Size[1]) or 300
+	local title = config.Title or "Panel"
+
+	local sg = inst("ScreenGui", {
+		Name = config.Name or "OceanPanel", ResetOnSpawn = false,
+		IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		DisplayOrder = 998,
+	}, CoreGui)
+
+	local card = frame(sg, {
+		name = "Card", colorKey = "bg",
+		size = UDim2.new(0, width, 0, 0),
+		pos = config.Position or UDim2.new(1, -18 - width, 0, 88),
+		z = 2,
+	})
+	card.AutomaticSize = Enum.AutomaticSize.Y
+	brd(card, "border", 1)
+	rnd(card, CORNER)
+	inst("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, card)
+
+	local header = frame(card, { name = "Header", colorKey = "surface", size = UDim2.new(1, 0, 0, 38), z = 3 })
+	rnd(header, CORNER)
+	frame(header, {
+		name = "Accent", colorKey = "white",
+		size = UDim2.new(1, 0, 0, 2), pos = UDim2.new(0, 0, 1, -2), z = 4,
+	})
+	local titleLbl = lbl(header, {
+		text = title, font = Enum.Font.GothamBold, size = 14,
+		sz = UDim2.new(1, -54, 1, 0), pos = UDim2.new(0, 14, 0, 0),
+	})
+	local closeBtn = btn(header, {
+		text = "✕", font = Enum.Font.GothamBold, size = 13, tcKey = "muted", trans = 1,
+		sz = UDim2.new(0, 28, 0, 28), pos = UDim2.new(1, -8, 0.5, 0), anchor = Vector2.new(1, 0.5), z = 5,
+	})
+
+	local body = frame(card, { name = "Body", trans = 1, size = UDim2.new(1, 0, 0, 0), z = 3 })
+	body.AutomaticSize = Enum.AutomaticSize.Y
+	body.LayoutOrder = 1
+	pad(body, 12, 12, 10, 12)
+	inst("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }, body)
+
+	local dragging, startPos, startInput
+	header.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging, startInput, startPos = true, input.Position, card.Position
+		end
+	end)
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local d = input.Position - startInput
+			card.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+		end
+	end)
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+
+	local Panel = { Gui = sg, Card = card }
+	local order = 1
+
+	closeBtn.MouseButton1Click:Connect(function()
+		sg.Enabled = false
+		if config.OnClose then pcall(config.OnClose) end
+	end)
+
+	function Panel:AddRow(label, accentKey)
+		order = order + 1
+		local row = frame(body, { name = "Row", colorKey = "surface", size = UDim2.new(1, 0, 0, 22), z = 4 })
+		row.LayoutOrder = order
+		rnd(row, 6)
+		local left = lbl(row, {
+			text = label or "", font = Enum.Font.GothamMedium, size = 12, colorKey = accentKey or "sub",
+			sz = UDim2.new(0.45, -8, 1, 0), pos = UDim2.new(0, 10, 0, 0),
+		})
+		local right = lbl(row, {
+			text = "-", font = Enum.Font.GothamBold, size = 12,
+			sz = UDim2.new(0.55, -10, 1, 0), pos = UDim2.new(0.45, 0, 0, 0),
+			xa = Enum.TextXAlignment.Right,
+		})
+		right.TextTruncate = Enum.TextTruncate.AtEnd
+		return {
+			Instance = row,
+			Set      = function(_, v) right.Text = tostring(v) end,
+			SetLabel = function(_, t) left.Text = tostring(t) end,
+			Destroy  = function() row:Destroy() end,
+		}
+	end
+
+	function Panel:AddHeader(text, accentKey)
+		order = order + 1
+		local row = frame(body, { name = "Head", trans = 1, size = UDim2.new(1, 0, 0, 16), z = 4 })
+		row.LayoutOrder = order
+		local l = lbl(row, {
+			text = text or "", font = Enum.Font.GothamBold, size = 12, colorKey = accentKey or "white",
+			sz = UDim2.new(1, -4, 1, 0), pos = UDim2.new(0, 4, 0, 0),
+		})
+		return {
+			Instance = row,
+			Set     = function(_, t) l.Text = tostring(t) end,
+			Destroy = function() row:Destroy() end,
+		}
+	end
+
+	function Panel:AddSeparator()
+		order = order + 1
+		local sep = frame(body, { name = "Sep", colorKey = "border", size = UDim2.new(1, 0, 0, 1), z = 4 })
+		sep.LayoutOrder = order
+		return sep
+	end
+
+	function Panel:SetTitle(text) titleLbl.Text = tostring(text) end
+	function Panel:SetVisible(on) sg.Enabled = on ~= false end
+	function Panel:Destroy() sg:Destroy() end
+
+	return Panel
 end
 
 return OceanUI
