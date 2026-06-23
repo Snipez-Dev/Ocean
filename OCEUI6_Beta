@@ -1346,6 +1346,14 @@ function OceanUI:CreateWindow(config)
 		resizeStrk.Color = K.white
 	end, resizeStrk)
 
+	-- longer transparent grab line at the bottom center, same look as the resize stroke
+	local grabLine = frame(win,{
+		name="GrabLine", colorKey="white", trans=0.62,
+		size=UDim2.new(0, 70, 0, 3),
+		pos=UDim2.new(0.5, 0, 1, -7), anchor=Vector2.new(0.5, 1), z=20,
+	})
+	rnd(grabLine, 99)
+
 	local resizeBtn = inst("TextButton",{
 		BackgroundTransparency=1, Text="",
 		Size=UDim2.new(0,44,0,44),
@@ -1551,52 +1559,52 @@ function OceanUI:CreateWindow(config)
 	end)
 
 	local minOverlay = frame(sg, {
-		name="MinOverlay", colorKey="surface",
-		size=UDim2.new(0, 182, 0, 44),
+		name="MinOverlay", colorKey="bg",
+		size=UDim2.new(0, 148, 0, 34),
 		pos=UDim2.new(0.5, 0, 0.05, 0), anchor=Vector2.new(0.5, 0.5), z=100
 	})
-	rnd(minOverlay, 22)
+	rnd(minOverlay, 17)
 	brd(minOverlay, "borderHi", 1)
 	minOverlay.Visible = false
 
 	local minGlow = frame(minOverlay,{
-		name="OuterGlow", colorKey="white", trans=0.88,
-		size=UDim2.new(1,12,1,12), pos=UDim2.new(0,-6,0,-6),
+		name="OuterGlow", colorKey="white", trans=0.93,
+		size=UDim2.new(1,10,1,10), pos=UDim2.new(0,-5,0,-5),
 		z=99,
 	})
-	rnd(minGlow, 27)
+	rnd(minGlow, 21)
 
 	local dragArea = inst("TextButton", {
 		Name="DragArea", BackgroundTransparency=1, Text="",
-		Size=UDim2.new(0, 44, 1, 0), Position=UDim2.new(0,0,0,0), ZIndex=102, AutoButtonColor=false
+		Size=UDim2.new(0, 38, 1, 0), Position=UDim2.new(0,0,0,0), ZIndex=102, AutoButtonColor=false
 	}, minOverlay)
 
 	if lucide then
 		img(dragArea, {
-			img=getLucide("move", 18), colorKey="sub",
-			sz=UDim2.new(0,18,0,18), pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=103
+			img=getLucide("move", 16), colorKey="sub",
+			sz=UDim2.new(0,16,0,16), pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=103
 		})
 	else
-		lbl(dragArea,{text="+",font=Enum.Font.GothamMedium,size=18,colorKey="sub",sz=UDim2.fromScale(1,1),xa=Enum.TextXAlignment.Center,ya=Enum.TextYAlignment.Center,z=103})
+		lbl(dragArea,{text="+",font=Enum.Font.GothamMedium,size=16,colorKey="sub",sz=UDim2.fromScale(1,1),xa=Enum.TextXAlignment.Center,ya=Enum.TextYAlignment.Center,z=103})
 	end
 
-	frame(minOverlay,{name="Sep", colorKey="border", size=UDim2.new(0,1,0,22), pos=UDim2.new(0,44,0.5,0), anchor=Vector2.new(0,0.5), z=102})
+	frame(minOverlay,{name="Sep", colorKey="border", size=UDim2.new(0,1,0,18), pos=UDim2.new(0,38,0.5,0), anchor=Vector2.new(0,0.5), z=102})
 
 	local clickArea = inst("TextButton", {
 		Name="ClickArea", BackgroundTransparency=1, Text="",
-		Size=UDim2.new(1, -45, 1, 0), Position=UDim2.new(0,45,0,0), ZIndex=102, AutoButtonColor=false
+		Size=UDim2.new(1, -39, 1, 0), Position=UDim2.new(0,39,0,0), ZIndex=102, AutoButtonColor=false
 	}, minOverlay)
 
 	if lucide then
 		img(clickArea, {
-			img=getLucide("layout-dashboard", 18), colorKey="white",
-			sz=UDim2.new(0,18,0,18), pos=UDim2.new(0,12,0.5,0), anchor=Vector2.new(0,0.5), z=103
+			img=getLucide("layout-dashboard", 16), colorKey="white",
+			sz=UDim2.new(0,16,0,16), pos=UDim2.new(0,9,0.5,0), anchor=Vector2.new(0,0.5), z=103
 		})
 	end
 
 	lbl(clickArea, {
-		text="Open Ocean", font=Enum.Font.GothamBold, size=13, colorKey="white",
-		sz=UDim2.new(1,-40,1,0), pos=UDim2.new(0, (lucide and 38 or 12),0,0), xa=Enum.TextXAlignment.Left, z=103
+		text="Open Ocean", font=Enum.Font.GothamMedium, size=12, colorKey="white",
+		sz=UDim2.new(1,-32,1,0), pos=UDim2.new(0, (lucide and 31 or 9),0,0), xa=Enum.TextXAlignment.Left, z=103
 	})
 
 	local savedMinPos = UDim2.new(0.5, 0, 0.05, 0)
