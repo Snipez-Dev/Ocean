@@ -328,6 +328,7 @@ local function lbl(parent, p)
 	end
 	local l = inst("TextLabel",{
 		BackgroundTransparency = 1,
+		AutoLocalize           = false,
 		Font                   = p.font   or Enum.Font.GothamMedium,
 		Text                   = p.text   or "",
 		TextColor3             = color or K[colorKey] or K.text,
@@ -373,6 +374,7 @@ local function btn(parent, p)
 		BackgroundColor3       = color or K[colorKey] or K.raised,
 		BackgroundTransparency = p.trans  or 0,
 		BorderSizePixel        = 0,
+		AutoLocalize           = false,
 		Font                   = p.font   or Enum.Font.GothamMedium,
 		Text                   = p.text   or "",
 		TextColor3             = tc or K[tcKey] or K.text,
@@ -1002,6 +1004,7 @@ local function makeTextBox(parent, placeholder, defaultText)
 
 	local box = inst("TextBox",{
 		Name = "InputBox",
+		AutoLocalize = false,
 		BackgroundColor3 = K.raised,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
