@@ -1,0 +1,191 @@
+-- Some executors intermittently return a bad HttpGet body or block loadstring,
+-- which leaves OceanUI without its methods. Retry until a valid module loads.
+local function loadOcean()
+	local url = "https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/OCEUI6"
+	local lastErr
+	for _ = 1, 8 do
+		local ok, mod = pcall(function()
+			local chunk = loadstring(game:HttpGet(url))
+			return chunk and chunk()
+		end)
+		if ok and type(mod) == "table" and type(mod.CreateWindow) == "function" then
+			return mod
+		end
+		lastErr = mod
+		task.wait(0.4)
+	end
+	error("OceanUI failed to load: " .. tostring(lastErr))
+end
+
+local OceanUI = loadOcean()
+
+local Window = OceanUI:CreateWindow({
+	Title = "Showcase",
+	Theme = "Ocean",
+	Size = {820, 480},
+})
+
+Window:CreateTag("Beta",    Color3.fromRGB(240, 100, 100), Color3.fromRGB(255, 255, 255))
+Window:CreateTag("Premium", Color3.fromRGB(255, 180, 50),  Color3.fromRGB(50, 50, 50))
+Window:CreateTag("v7.0",    Color3.fromRGB(60, 120, 210),  Color3.fromRGB(200, 255, 255))
+
+Window:Notify({
+	Title    = "Welcome",
+	Text     = "Library loaded successfully!",
+	Icon     = "check",
+	Duration = 4
+})
+
+local MainTab = Window:AddTab("Main", "home")
+
+MainTab:AddLabel("Welcome to the OceanUI Showcase", "info")
+MainTab:AddSeparator()
+
+local godmode = MainTab:AddToggle({
+	Title    = "God Mode",
+	Subtitle = "Become invincible",
+	Icon     = "shield",
+	Default  = false,
+	Callback = function(state)
+		print("God Mode:", state)
+	end,
+})
+
+local walkspeed = MainTab:AddSlider({
+	Title    = "Walk Speed",
+	Icon     = "activity",
+	Min      = 16,
+	Max      = 200,
+	Default  = 16,
+	Callback = function(value)
+		local char = game.Players.LocalPlayer.Character
+		if char and char:FindFirstChild("Humanoid") then
+			char.Humanoid.WalkSpeed = value
+		end
+	end,
+})
+
+MainTab:AddButton({
+	Title    = "Custom Button Label",
+	Subtitle = "The button on the right says 'Press Me'",
+	Icon     = "mouse-pointer",
+	Text     = "Press Me",
+	Callback = function()
+		Window:Notify({Title="Pressed", Text="You pressed the custom button!"})
+	end,
+})
+
+local VisualsTab = Window:AddTab("Visuals", "eye")
+
+local espColor = VisualsTab:AddColorPicker({
+	Title    = "ESP Color",
+	Subtitle = "Pick a color for player ESP",
+	Icon     = "palette",
+	Default  = Color3.fromRGB(255, 0, 0),
+	Callback = function(color)
+		print("ESP Color:", color)
+	end,
+})
+
+VisualsTab:AddSeparator()
+
+local materialDropdown = VisualsTab:AddDropdown({
+	Title   = "Chams Material",
+	Icon    = "box",
+	Options = {
+		"ForceField", "Neon", "Plastic", "Glass",
+		"Wood", "Metal", "Ice", "Slate",
+		"Marble", "Granite", "Sand", "Fabric",
+		"Grass", "Cobblestone", "Brick", "Foil"
+	},
+	Default  = 1,
+	Callback = function(selected)
+		print("Selected material:", selected)
+	end,
+})
+
+VisualsTab:AddSeparator()
+
+local espElements = VisualsTab:AddMultiDropdown({
+	Title    = "ESP Elements",
+	Subtitle = "Toggle individual ESP visual elements",
+	Icon     = "layers",
+	Options  = {"Names", "Boxes", "Bones", "Chams", "Tools", "Snaplines"},
+	Default  = {"Names", "Boxes"},
+	Callback = function(selected)
+		for opt, enabled in pairs(selected) do
+			print(opt, enabled and "on" or "off")
+		end
+	end,
+})
+
+local SettingsTab = Window:AddTab("Settings", "settings")
+
+local configName = SettingsTab:AddTextBox({
+	Title       = "Configuration Name",
+	Icon        = "file-text",
+	Placeholder = "Enter config name...",
+	Default     = "ShowcaseConfig",
+	Callback    = function(text, enterPressed)
+		if enterPressed then
+			print("Config name:", text)
+		end
+	end,
+})
+
+local uiKeybind = SettingsTab:AddKeybind({
+	Title    = "Toggle UI Keybind",
+	Subtitle = "Press RightShift to hide",
+	Icon     = "keyboard",
+	Default  = Enum.KeyCode.RightShift,
+	Callback = function()
+		local sg = game:GetService("CoreGui"):FindFirstChild("OceanUI")
+			or game.Players.LocalPlayer.PlayerGui:FindFirstChild("OceanUI")
+		if sg then sg.Enabled = not sg.Enabled end
+	end,
+})
+
+SettingsTab:AddSeparator()
+
+SettingsTab:AddButton({
+	Title    = "Unload",
+	Icon     = "log-out",
+	Text     = "Unload",
+	Callback = function()
+		Window:Destroy()
+	end,
+})
+
+SettingsTab:AddSeparator()
+SettingsTab:AddLabel("Config System", "save")
+
+Window.ConfigManager:SetFolder("OceanUI_Examples")
+local MyConfig = Window.ConfigManager:CreateConfig("Showcase")
+
+MyConfig:RegisterElement("GodMode",        godmode)
+MyConfig:RegisterElement("WalkSpeed",      walkspeed)
+MyConfig:RegisterElement("ESPColor",       espColor)
+MyConfig:RegisterElement("ChamsMaterial",  materialDropdown)
+MyConfig:RegisterElement("ESPElements",    espElements)
+MyConfig:RegisterElement("ConfigName",     configName)
+MyConfig:RegisterElement("UIKeybind",      uiKeybind)
+
+SettingsTab:AddButton({
+	Title    = "Save Config",
+	Icon     = "save",
+	Text     = "Save",
+	Callback = function()
+		MyConfig:Save()
+		Window:Notify({Title="Config", Text="Saved!"})
+	end
+})
+
+SettingsTab:AddButton({
+	Title    = "Load Config",
+	Icon     = "download",
+	Text     = "Load",
+	Callback = function()
+		MyConfig:Load()
+		Window:Notify({Title="Config", Text="Loaded!"})
+	end
+})
