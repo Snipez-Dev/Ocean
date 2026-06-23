@@ -2548,54 +2548,69 @@ function OceanUI:CreateWindow(config)
 	end
 
 
-	task.spawn(function()
-		task.wait(0.05)
-		tw(win,{Size=UDim2.new(0,WIN_W,0,WIN_H)},0.38,Enum.EasingStyle.Back,Enum.EasingDirection.Out):Play()
-		task.wait(0.28)
-
-		local STEP=0.11
-		for i,d in ipairs(charDefs) do
-			task.delay((i-1)*STEP,function()
-				d.label.Position=UDim2.new(0.5,0,0.5,d.yo+10)
-				tw(d.label,{TextTransparency=0,Position=UDim2.new(0.5,0,0.5,d.yo)},0.44,Enum.EasingStyle.Quint):Play()
-			end)
-		end
-
-		task.delay(#CHARS*STEP+0.06,function()
-			tw(loadSub,{TextTransparency=0},0.4):Play()
-		end)
-
-		local shimAt=#CHARS*STEP+0.44
-		task.delay(shimAt,function()
-			shimF.BackgroundTransparency=0
-			local t0,dur=os.clock(),0.55
-			local conn
-			conn=RunService.Heartbeat:Connect(function()
-				local t=math.min((os.clock()-t0)/dur,1)
-				local e=t<.5 and 2*t*t or -1+(4-2*t)*t
-				shimG.Offset=Vector2.new(-1+e*2,(-1+e*2)*0.4)
-				if t>=1 then conn:Disconnect(); shimF.BackgroundTransparency=1 end
-			end)
-		end)
-
-		task.delay(shimAt+0.72,function()
+	-- the reveal must survive executors that hook TweenService/RunService and break
+	-- the intro animation, otherwise the window stays stuck behind the load layer
+	local revealed = false
+	local function reveal()
+		if revealed then return end
+		revealed = true
+		win.Size = UDim2.new(0, WIN_W, 0, WIN_H)
+		titlebar.Visible = true
+		body.Visible = true
+		pcall(function() tw(body,{BackgroundTransparency=0},0.28):Play() end)
+		pcall(function() tw(contentArea,{BackgroundTransparency=0},0.28):Play() end)
+		if sidebar then pcall(function() tw(sidebar,{BackgroundTransparency=0},0.28):Play() end) end
+		pcall(function()
 			for _,d in ipairs(loadLayer:GetDescendants()) do
 				if d:IsA("TextLabel") then tw(d,{TextTransparency=1},0.2):Play()
 				elseif d:IsA("Frame") then tw(d,{BackgroundTransparency=1},0.2):Play() end
 			end
 			tw(loadLayer,{BackgroundTransparency=1},0.22):Play()
+		end)
+		task.delay(0.3, function() pcall(function() loadLayer:Destroy() end) end)
+	end
 
-			titlebar.Visible=true
-			body.Visible=true
-			tw(body,{BackgroundTransparency=0},0.28):Play()
-			tw(contentArea,{BackgroundTransparency=0},0.28):Play()
-			if sidebar then
-				tw(sidebar,{BackgroundTransparency=0},0.28):Play()
+	task.spawn(function()
+		local ok = pcall(function()
+			task.wait(0.05)
+			tw(win,{Size=UDim2.new(0,WIN_W,0,WIN_H)},0.38,Enum.EasingStyle.Back,Enum.EasingDirection.Out):Play()
+			task.wait(0.28)
+
+			local STEP=0.11
+			for i,d in ipairs(charDefs) do
+				task.delay((i-1)*STEP,function()
+					pcall(function()
+						d.label.Position=UDim2.new(0.5,0,0.5,d.yo+10)
+						tw(d.label,{TextTransparency=0,Position=UDim2.new(0.5,0,0.5,d.yo)},0.44,Enum.EasingStyle.Quint):Play()
+					end)
+				end)
 			end
 
-			task.delay(0.28,function() loadLayer:Destroy() end)
+			task.delay(#CHARS*STEP+0.06,function()
+				pcall(function() tw(loadSub,{TextTransparency=0},0.4):Play() end)
+			end)
+
+			local shimAt=#CHARS*STEP+0.44
+			task.delay(shimAt,function()
+				pcall(function()
+					shimF.BackgroundTransparency=0
+					local t0,dur=os.clock(),0.55
+					local conn
+					conn=RunService.Heartbeat:Connect(function()
+						local t=math.min((os.clock()-t0)/dur,1)
+						local e=t<.5 and 2*t*t or -1+(4-2*t)*t
+						shimG.Offset=Vector2.new(-1+e*2,(-1+e*2)*0.4)
+						if t>=1 then conn:Disconnect(); shimF.BackgroundTransparency=1 end
+					end)
+				end)
+			end)
+
+			task.delay(shimAt+0.72, reveal)
 		end)
+		if not ok then reveal() end
 	end)
+
+	task.delay(2.2, reveal)
 
 	local HttpService = game:GetService("HttpService")
 	local files = isfolder and makefolder and writefile and readfile and isfile
@@ -2707,24 +2722,42 @@ function OceanUI:CreateNewWindow(config)
 	local width = (config.Size and config.Size[1]) or 300
 	local title = config.Title or "Panel"
 
+	local parent = CoreGui
+	pcall(function()
+		if typeof(gethui) == "function" then
+			parent = gethui()
+		elseif player:FindFirstChild("PlayerGui") then
+			parent = player.PlayerGui
+		end
+	end)
+
 	local sg = inst("ScreenGui", {
 		Name = config.Name or "OceanPanel", ResetOnSpawn = false,
 		IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		DisplayOrder = 998,
-	}, CoreGui)
+	}, parent)
 
 	local card = frame(sg, {
-		name = "Card", colorKey = "bg",
+		name = "Card", trans = 1,
 		size = UDim2.new(0, width, 0, 0),
 		pos = config.Position or UDim2.new(1, -18 - width, 0, 88),
 		z = 2,
 	})
 	card.AutomaticSize = Enum.AutomaticSize.Y
-	brd(card, "border", 1)
-	rnd(card, CORNER)
-	inst("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, card)
 
-	local header = frame(card, { name = "Header", colorKey = "surface", size = UDim2.new(1, 0, 0, 38), z = 3 })
+	local glow = frame(card, {
+		name = "OuterGlow", colorKey = "white", trans = 0.93,
+		size = UDim2.new(1, 10, 1, 10), pos = UDim2.new(0, -5, 0, -5), z = 1,
+	})
+	rnd(glow, 14)
+
+	local panel = frame(card, { name = "Panel", colorKey = "bg", size = UDim2.new(1, 0, 0, 0), z = 2 })
+	panel.AutomaticSize = Enum.AutomaticSize.Y
+	brd(panel, "border", 1)
+	rnd(panel, CORNER)
+	inst("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, panel)
+
+	local header = frame(panel, { name = "Header", colorKey = "surface", size = UDim2.new(1, 0, 0, 38), z = 3 })
 	rnd(header, CORNER)
 	frame(header, {
 		name = "Accent", colorKey = "white",
@@ -2734,12 +2767,36 @@ function OceanUI:CreateNewWindow(config)
 		text = title, font = Enum.Font.GothamBold, size = 14,
 		sz = UDim2.new(1, -54, 1, 0), pos = UDim2.new(0, 14, 0, 0),
 	})
+
 	local closeBtn = btn(header, {
-		text = "✕", font = Enum.Font.GothamBold, size = 13, tcKey = "muted", trans = 1,
+		name = "Close", colorKey = "raised", trans = 1,
 		sz = UDim2.new(0, 28, 0, 28), pos = UDim2.new(1, -8, 0.5, 0), anchor = Vector2.new(1, 0.5), z = 5,
 	})
+	rnd(closeBtn, 6)
+	local closeIc = img(closeBtn, {
+		name = "Icon", img = getLucide("x", 16), colorKey = "sub",
+		sz = UDim2.new(0, 16, 0, 16), pos = UDim2.new(0.5, 0, 0.5, 0), anchor = Vector2.new(0.5, 0.5), z = 6,
+	})
+	local closeTxt
+	if not lucide then
+		closeIc.Visible = false
+		closeTxt = lbl(closeBtn, {
+			text = "X", font = Enum.Font.GothamBold, size = 13, colorKey = "sub",
+			sz = UDim2.fromScale(1, 1), xa = Enum.TextXAlignment.Center, ya = Enum.TextYAlignment.Center, z = 6,
+		})
+	end
+	closeBtn.MouseEnter:Connect(function()
+		tw(closeBtn, { BackgroundTransparency = 0, BackgroundColor3 = Color3.fromRGB(220, 60, 60) }, 0.1):Play()
+		tw(closeIc, { ImageColor3 = K.white }, 0.1):Play()
+		if closeTxt then tw(closeTxt, { TextColor3 = K.white }, 0.1):Play() end
+	end)
+	closeBtn.MouseLeave:Connect(function()
+		tw(closeBtn, { BackgroundTransparency = 1 }, 0.1):Play()
+		tw(closeIc, { ImageColor3 = K.sub }, 0.1):Play()
+		if closeTxt then tw(closeTxt, { TextColor3 = K.sub }, 0.1):Play() end
+	end)
 
-	local body = frame(card, { name = "Body", trans = 1, size = UDim2.new(1, 0, 0, 0), z = 3 })
+	local body = frame(panel, { name = "Body", trans = 1, size = UDim2.new(1, 0, 0, 0), z = 3 })
 	body.AutomaticSize = Enum.AutomaticSize.Y
 	body.LayoutOrder = 1
 	pad(body, 12, 12, 10, 12)
