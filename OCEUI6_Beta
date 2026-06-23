@@ -1997,7 +1997,7 @@ function OceanUI:CreateWindow(config)
 		inst("UIListLayout",{
 			FillDirection=Enum.FillDirection.Vertical,
 			SortOrder=Enum.SortOrder.LayoutOrder,
-			Padding=UDim.new(0,6),
+			Padding=UDim.new(0,0),
 		},scroll)
 
 		if sidebar then
@@ -2044,55 +2044,26 @@ function OceanUI:CreateWindow(config)
 
 		local Tab = {}
 		local rowCounter = 0
-		local sectionBody = nil
 
-		-- elements are grouped into rounded section cards; a label or separator starts a new one
-		local function ensureSection()
-			if sectionBody then return sectionBody end
+		local function makeRow(title, subtitle, iconName)
 			rowCounter = rowCounter + 1
-			local card = frame(scroll,{
-				name="Section", colorKey="surface", trans=0.15,
-				size=UDim2.new(1,0,0,8), z=7,
-			})
-			card.LayoutOrder = rowCounter
-			rnd(card, 10)
-			brd(card, "border", 1)
-			pad(card, 0, 0, 4, 4)
-			local layout = inst("UIListLayout",{
-				FillDirection=Enum.FillDirection.Vertical, SortOrder=Enum.SortOrder.LayoutOrder, Padding=UDim.new(0,2),
-			}, card)
-			-- size to the rows only, so an open dropdown overlays instead of growing the card
-			local function fit() card.Size = UDim2.new(1,0,0, layout.AbsoluteContentSize.Y + 8) end
-			layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
-			sectionBody = card
-			return card
-		end
-
-		local function rowBase(title, rowH, prefix)
-			local card = ensureSection()
-			rowCounter = rowCounter + 1
-			local r = frame(card,{
-				name=prefix..title, colorKey="bg", trans=1,
+			local rowH = subtitle and 54 or 42
+			local r = frame(scroll,{
+				name="Row_"..title, colorKey="bg", trans=1,
 				size=UDim2.new(1,0,0,rowH), z=7,
 			})
 			r.LayoutOrder = rowCounter
-			rnd(r, 7)
-			local hover = frame(r,{ name="Hover", colorKey="raised", trans=1, size=UDim2.new(1,0,1,0), z=6 })
-			rnd(hover, 7)
-			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.55},0.12):Play() end)
-			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
-			pad(r, 14, 14, 0, 0)
-			return r
-		end
 
-		local function makeRow(title, subtitle, iconName)
-			local r = rowBase(title, subtitle and 54 or 42, "Row_")
-			local textOffset = (iconName and lucide) and 32 or 0
+			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
+			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
+
+			local textOffset = (iconName and lucide) and 30 or 0
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,6,0.5,0), anchor=Vector2.new(0,0.5), z=8,
+					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=8,
 				})
 			end
 
@@ -2108,23 +2079,45 @@ function OceanUI:CreateWindow(config)
 				})
 			end
 
+			frame(r,{
+				name="Div", colorKey="border",
+				size=UDim2.new(1,0,0,1),
+				pos=UDim2.new(0,0,1,-1), z=8,
+			})
+
 			return r
 		end
 
 		local function makeSliderRow(title, iconName)
-			local r = rowBase(title, 60, "SlRow_")
-			local textOffset = (iconName and lucide) and 32 or 0
+			rowCounter = rowCounter + 1
+			local r = frame(scroll,{
+				name="SlRow_"..title, colorKey="bg", trans=1,
+				size=UDim2.new(1,0,0,60), z=7,
+			})
+			r.LayoutOrder = rowCounter
+
+			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
+			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
+
+			local textOffset = (iconName and lucide) and 30 or 0
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,6,0,10), z=8,
+					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0,10), z=8,
 				})
 			end
 
 			lbl(r,{
 				text=title, font=Enum.Font.GothamMedium, size=14, colorKey="text",
 				sz=UDim2.new(1,0,0,20), pos=UDim2.new(0,textOffset,0,10), z=8,
+			})
+
+			frame(r,{
+				name="Div", colorKey="border",
+				size=UDim2.new(1,0,0,1),
+				pos=UDim2.new(0,0,1,-1), z=8,
 			})
 
 			return r
@@ -2226,27 +2219,31 @@ function OceanUI:CreateWindow(config)
 		end
 
 		function Tab:AddLabel(text, iconName)
-			sectionBody = nil -- following elements go into a fresh section under this header
 			rowCounter = rowCounter + 1
 			local r = frame(scroll,{
 				name="LblRow", colorKey="bg", trans=1,
-				size=UDim2.new(1,0,0,24), z=7,
+				size=UDim2.new(1,0,0,34), z=7,
 			})
 			r.LayoutOrder = rowCounter
-			pad(r, 4, 4, 0, 0)
 
-			local textOffset = (iconName and lucide) and 24 or 0
+			local textOffset = (iconName and lucide) and 28 or 0
 
 			if iconName and lucide then
 				img(r,{
-					name="Icon", img=getLucide(iconName, 16),
-					colorKey="sub", sz=UDim2.new(0,17,0,17), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0,0.5), z=8,
+					name="Icon", img=getLucide(iconName, 18),
+					colorKey="sub", sz=UDim2.new(0,19,0,19), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0,0.5), z=8,
 				})
 			end
 
 			local l = lbl(r,{
-				text=text or "", font=Enum.Font.GothamBold, size=12, colorKey="muted",
+				text=text or "", font=Enum.Font.Gotham, size=13, colorKey="sub",
 				sz=UDim2.new(1,0,1,0), pos=UDim2.new(0,textOffset,0,0), z=8,
+			})
+
+			frame(r,{
+				name="Div", colorKey="border",
+				size=UDim2.new(1,0,0,1),
+				pos=UDim2.new(0,0,1,-1), z=8,
 			})
 
 			return {
@@ -2422,7 +2419,12 @@ function OceanUI:CreateWindow(config)
 		end
 
 		function Tab:AddSeparator()
-			sectionBody = nil -- break: following elements start a new section card
+			rowCounter = rowCounter + 1
+			local r = frame(scroll,{
+				name="Sep", colorKey="bg", trans=1,
+				size=UDim2.new(1,0,0,12), z=7,
+			})
+			r.LayoutOrder = rowCounter
 		end
 
 		return Tab
