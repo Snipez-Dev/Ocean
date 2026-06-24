@@ -1620,7 +1620,11 @@ function OceanUI:CreateWindow(config)
 		sz=UDim2.new(1,-34,1,0), pos=UDim2.new(0, (lucide and 33 or 10),0,0), xa=Enum.TextXAlignment.Left, z=103
 	})
 
-	local savedMinPos = UDim2.new(0.5, 0, 0.05, 0)
+	-- the ScreenGui ignores the topbar inset, so a scale-based Y can render above the
+	-- visible area on setups with UI scaling; offset past the inset so the pill stays on-screen
+	local topInset = 36
+	pcall(function() topInset = game:GetService("GuiService"):GetGuiInset().Y end)
+	local savedMinPos = UDim2.new(0.5, 0, 0, topInset + 70)
 	do
 		local d_dragging = false
 		local ds, ws
