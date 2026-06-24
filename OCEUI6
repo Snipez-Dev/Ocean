@@ -1285,9 +1285,7 @@ function OceanUI:CreateWindow(config)
 		Position=UDim2.fromOffset(-10,-10), Visible=false,
 	}, sg)
 
-	-- games that force first-person re-lock the mouse every frame; binding after the
-	-- camera step lets us win and keep the cursor free+visible while the menu is shown,
-	-- so the UI is usable without spamming Esc. cursorSink.Visible gates it.
+	
 	RunService:BindToRenderStep("OceanUICursorFree", Enum.RenderPriority.Camera.Value + 1, function()
 		if cursorSink.Visible then
 			UIS.MouseBehavior = Enum.MouseBehavior.Default
@@ -1698,6 +1696,17 @@ function OceanUI:CreateWindow(config)
 
 	minBtn.MouseButton1Click:Connect(doMinimize)
 	clickArea.MouseButton1Click:Connect(doRestore)
+
+
+	local toggleKey = Enum.KeyCode.RightShift
+	local function setToggleKey(key)
+		toggleKey = key
+	end
+	UIS.InputBegan:Connect(function(inp)
+		if toggleKey and inp.KeyCode == toggleKey and not UIS:GetFocusedTextBox() then
+			if minimized then doRestore() else doMinimize() end
+		end
+	end)
 
 	-- Drag
 	local dragging,ds,ws
@@ -2428,6 +2437,34 @@ function OceanUI:CreateWindow(config)
 			r.LayoutOrder = rowCounter
 		end
 
+		-- dropdown bound to the window's minimize hotkey, so users can rebind it in-menu
+		function Tab:AddToggleKey(opts)
+			opts = opts or {}
+			local keys = opts.Keys or {
+				"RightShift", "LeftShift", "RightControl", "LeftControl", "RightAlt", "LeftAlt",
+				"Insert", "Delete", "Home", "End", "PageUp", "PageDown",
+				"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+			}
+			local current = (toggleKey and toggleKey.Name) or keys[1]
+			local present = false
+			for _, k in ipairs(keys) do if k == current then present = true break end end
+			if not present then table.insert(keys, 1, current) end
+			return self:AddDropdown({
+				Title    = opts.Title or "UI Toggle Key",
+				Subtitle = opts.Subtitle,
+				Icon     = opts.Icon or "keyboard",
+				Options  = keys,
+				Default  = current,
+				Callback = function(sel)
+					local ok, key = pcall(function() return Enum.KeyCode[sel] end)
+					if ok and key then
+						setToggleKey(key)
+						if opts.Callback then pcall(opts.Callback, key) end
+					end
+				end,
+			})
+		end
+
 		return Tab
 	end
 
@@ -2832,6 +2869,15 @@ function OceanUI:CreateWindow(config)
 
 	function Window:IsMinimized()
 		return minimized
+	end
+
+	-- rebind (or disable with nil) the built-in minimize/restore hotkey
+	function Window:SetToggleKey(key)
+		setToggleKey(key)
+	end
+
+	function Window:GetToggleKey()
+		return toggleKey
 	end
 
 	return Window
