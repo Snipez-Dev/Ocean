@@ -1,4 +1,4 @@
--- ===================== OCEUI6 BETA TEST CODE (runs first on load) =====================
+
 local RUN_BETA_TEST = true
 
 local function OceanUITest(OceanUI)
@@ -29,7 +29,6 @@ local function OceanUITest(OceanUI)
 
 	return Window
 end
--- ======================================================================================
 
 local Players      = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -2824,15 +2823,19 @@ function OceanUI:CreateNewWindow(config)
 	local width = (config.Size and config.Size[1]) or 300
 	local title = config.Title or "Panel"
 
-	-- same stealth parent chain as the main window: gethui -> cloneref(CoreGui) -> CoreGui
-	local parent = CoreGui
+	-- panels update from background loops (task.spawn); raw CoreGui needs the Plugin
+	-- capability those threads lose after a yield on some executors, so the rows would
+	-- stop updating. gethui is a hidden container that stays accessible; otherwise fall
+	-- back to PlayerGui, which never requires Plugin capability.
+	local parent
 	pcall(function()
 		if typeof(gethui) == "function" then
 			parent = gethui()
-		elseif typeof(cloneref) == "function" then
-			parent = cloneref(CoreGui)
 		end
 	end)
+	if not parent then
+		parent = player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui")
+	end
 
 	local sg = inst("ScreenGui", {
 		Name = config.Name or "OceanPanel", ResetOnSpawn = false,
