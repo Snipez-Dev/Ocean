@@ -1278,6 +1278,26 @@ function OceanUI:CreateWindow(config)
 		DisplayOrder=999,
 	}, CoreGui)
 
+	
+	local cursorSink = inst("TextButton",{
+		Name="CursorSink", Modal=true, Text="", AutoButtonColor=false,
+		BackgroundTransparency=1, Size=UDim2.fromOffset(1,1),
+		Position=UDim2.fromOffset(-10,-10), Visible=false,
+	}, sg)
+
+	-- games that force first-person re-lock the mouse every frame; binding after the
+	-- camera step lets us win and keep the cursor free+visible while the menu is shown,
+	-- so the UI is usable without spamming Esc. cursorSink.Visible gates it.
+	RunService:BindToRenderStep("OceanUICursorFree", Enum.RenderPriority.Camera.Value + 1, function()
+		if cursorSink.Visible then
+			UIS.MouseBehavior = Enum.MouseBehavior.Default
+			UIS.MouseIconEnabled = true
+		end
+	end)
+	sg.Destroying:Connect(function()
+		pcall(function() RunService:UnbindFromRenderStep("OceanUICursorFree") end)
+	end)
+
 	local win = frame(sg,{
 		name="Win", colorKey="bg",
 		size=UDim2.new(0,WIN_W,0,0),
@@ -1623,7 +1643,12 @@ function OceanUI:CreateWindow(config)
 		end)
 	end
 	
-	minBtn.MouseButton1Click:Connect(function()
+	local minimized = false
+
+	local function doMinimize()
+		if minimized then return end
+		minimized = true
+		cursorSink.Visible = false
 		for _, closer in ipairs(allDropdownClosers) do pcall(closer) end
 		resizeBtn.Visible = false
 		resizeHandle.Visible = false
@@ -1632,7 +1657,6 @@ function OceanUI:CreateWindow(config)
 		local curSize = win.Size
 		win:SetAttribute("RestoreSizeX", curSize.X.Offset)
 		win:SetAttribute("RestoreSizeY", curSize.Y.Offset)
-		-- tween to height 0
 		tw(win,{Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
 		task.delay(0.25, function()
 			win.Visible = false
@@ -1641,19 +1665,22 @@ function OceanUI:CreateWindow(config)
 			tw(minOverlay, {Position = savedMinPos}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
 			win.ClipsDescendants = false
 		end)
-	end)
+	end
 
-	clickArea.MouseButton1Click:Connect(function()
+	local function doRestore()
+		if not minimized then return end
+		minimized = false
 		tw(minOverlay, {Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
 		task.delay(0.2, function()
 			minOverlay.Visible = false
 			win.Visible = true
+			cursorSink.Visible = true
 			resizeBtn.Visible = true
 			resizeHandle.Visible = true
 			win.ClipsDescendants = true
 			local rW = win:GetAttribute("RestoreSizeX") or WIN_W
 			local rH = win:GetAttribute("RestoreSizeY") or WIN_H
-			if config.Size and not MOBILE then 
+			if config.Size and not MOBILE then
 				rW = win:GetAttribute("RestoreSizeX") or math.clamp(config.Size[1], 200, vp.X - 20)
 				rH = win:GetAttribute("RestoreSizeY") or math.clamp(config.Size[2], 200, vp.Y - 40)
 			end
@@ -1663,7 +1690,10 @@ function OceanUI:CreateWindow(config)
 				tw(outerGlow, {BackgroundTransparency=0.93}, 0.15):Play()
 			end)
 		end)
-	end)
+	end
+
+	minBtn.MouseButton1Click:Connect(doMinimize)
+	clickArea.MouseButton1Click:Connect(doRestore)
 
 	-- Drag
 	local dragging,ds,ws
@@ -2626,6 +2656,7 @@ function OceanUI:CreateWindow(config)
 		win.Size = UDim2.new(0, WIN_W, 0, WIN_H)
 		titlebar.Visible = true
 		body.Visible = true
+		cursorSink.Visible = true
 		pcall(function() tw(body,{BackgroundTransparency=0},0.28):Play() end)
 		pcall(function() tw(contentArea,{BackgroundTransparency=0},0.28):Play() end)
 		if sidebar then pcall(function() tw(sidebar,{BackgroundTransparency=0},0.28):Play() end) end
@@ -2781,6 +2812,22 @@ function OceanUI:CreateWindow(config)
 
 	function Window:GetTheme()
 		return activeThemeName
+	end
+
+	function Window:Minimize()
+		doMinimize()
+	end
+
+	function Window:Restore()
+		doRestore()
+	end
+
+	function Window:Toggle()
+		if minimized then doRestore() else doMinimize() end
+	end
+
+	function Window:IsMinimized()
+		return minimized
 	end
 
 	return Window
