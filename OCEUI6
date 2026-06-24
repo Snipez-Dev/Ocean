@@ -2616,6 +2616,9 @@ function OceanUI:CreateWindow(config)
 		end)
 	end
 
+
+	-- the reveal must survive executors that hook TweenService/RunService and break
+	-- the intro animation, otherwise the window stays stuck behind the load layer
 	local revealed = false
 	local function reveal()
 		if revealed then return end
@@ -2788,20 +2791,15 @@ function OceanUI:CreateNewWindow(config)
 	local width = (config.Size and config.Size[1]) or 300
 	local title = config.Title or "Panel"
 
-
-	-- panels update from background loops (task.spawn); raw CoreGui needs the Plugin
-	-- capability those threads lose after a yield on some executors, so the rows would
-	-- stop updating. gethui is a hidden container that stays accessible; otherwise fall
-	-- back to PlayerGui, which never requires Plugin capability.
-	local parent
+	-- same stealth parent chain as the main window: gethui -> cloneref(CoreGui) -> CoreGui
+	local parent = CoreGui
 	pcall(function()
 		if typeof(gethui) == "function" then
 			parent = gethui()
+		elseif typeof(cloneref) == "function" then
+			parent = cloneref(CoreGui)
 		end
 	end)
-	if not parent then
-		parent = player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui")
-	end
 
 	local sg = inst("ScreenGui", {
 		Name = config.Name or "OceanPanel", ResetOnSpawn = false,
