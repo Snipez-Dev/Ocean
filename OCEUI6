@@ -1264,7 +1264,7 @@ function OceanUI:CreateWindow(config)
 		WIN_W  = config.Size and math.clamp(config.Size[1], 200, vp.X - 20) or math.min(vp.X - 20, 680)
 		WIN_H  = config.Size and math.clamp(config.Size[2], 200, vp.Y - 40) or math.min(vp.Y - 40, 420)
 	end
-	local SIDE_W = math.clamp(math.floor(WIN_W * 0.22), 80, 170)
+	local SIDE_W = math.clamp(math.floor(WIN_W * 0.25), 90, 170)
 	local TITLE  = config.Title or "Ocean"
 
 	local existing = CoreGui:FindFirstChild("OceanUI")
@@ -1493,23 +1493,14 @@ function OceanUI:CreateWindow(config)
 
 	local titleLbl = lbl(titlebar,{
 		text=TITLE, font=Enum.Font.GothamBold, size=16, colorKey="white",
-		sz=UDim2.new(0,0,1,0), pos=UDim2.new(0,16,0,0), z=6,
+		sz=UDim2.new(0,200,1,0), pos=UDim2.new(0,16,0,0), z=6,
 	})
-	titleLbl.AutomaticSize = Enum.AutomaticSize.X
 
 	local tagContainer = frame(titlebar,{
 		name="TagContainer", colorKey="bg", trans=1,
-		size=UDim2.new(0,0,1,0),
-		pos=UDim2.new(0, 0, 0, 0), z=6,
+		size=UDim2.new(0,300,1,0),
+		pos=UDim2.new(0, SIDE_W + 16, 0, 0), z=6,
 	})
-	tagContainer.AutomaticSize = Enum.AutomaticSize.X
-	
-	-- Position tags after the title label with some padding
-	local function updateTagPos()
-		tagContainer.Position = UDim2.new(0, titleLbl.AbsolutePosition.X + titleLbl.AbsoluteSize.X + 12 - titlebar.AbsolutePosition.X, 0, 0)
-	end
-	titleLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateTagPos)
-	task.defer(updateTagPos)
 	inst("UIListLayout",{
 		FillDirection=Enum.FillDirection.Horizontal,
 		SortOrder=Enum.SortOrder.LayoutOrder,
@@ -1809,7 +1800,7 @@ function OceanUI:CreateWindow(config)
 			size=UDim2.new(0,1,1,0),pos=UDim2.new(0,SIDE_W-1,0,0),z=15,
 		})
 		
-		local profileH = math.clamp(math.floor(WIN_H * 0.2), 54, 68)
+		local profileH = 68
 
 		sidebarScroll = inst("ScrollingFrame", {
 			Name="SidebarScroll", Size=UDim2.new(1,0,1,-profileH), Position=UDim2.new(0,0,0,0),
