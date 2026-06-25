@@ -1288,8 +1288,11 @@ function OceanUI:CreateWindow(config)
 	
 	RunService:BindToRenderStep("OceanUICursorFree", Enum.RenderPriority.Camera.Value + 1, function()
 		if cursorSink.Visible then
-			UIS.MouseBehavior = Enum.MouseBehavior.Default
-			UIS.MouseIconEnabled = true
+			local isFirstPerson = (camera.CFrame.Position - camera.Focus.Position).Magnitude < 1
+			if isFirstPerson then
+				UIS.MouseBehavior = Enum.MouseBehavior.Default
+				UIS.MouseIconEnabled = true
+			end
 		end
 	end)
 	sg.Destroying:Connect(function()
