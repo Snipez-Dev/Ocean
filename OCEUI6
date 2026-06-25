@@ -1647,11 +1647,12 @@ function OceanUI:CreateWindow(config)
 			end
 		end)
 	end
-	
 	local minimized = false
+	local animating = false
 
 	local function doMinimize()
-		if minimized then return end
+		if minimized or animating then return end
+		animating = true
 		minimized = true
 		cursorSink.Visible = false
 		for _, closer in ipairs(allDropdownClosers) do pcall(closer) end
@@ -1669,18 +1670,21 @@ function OceanUI:CreateWindow(config)
 		minOverlay.Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)
 		tw(minOverlay, {Position = savedMinPos}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
 
-		tw(win, {Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
-		task.delay(0.25, function()
+		local t = tw(win, {Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+		t.Completed:Connect(function()
 			win.Visible = false
 			win.ClipsDescendants = false
+			animating = false
 		end)
+		t:Play()
 	end
 
 	local function doRestore()
-		if not minimized then return end
-		minimized = false
-		tw(minOverlay, {Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
-		task.delay(0.2, function()
+		if not minimized or animating then return end
+		animating = true
+		
+		local tp = tw(minOverlay, {Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+		tp.Completed:Connect(function()
 			minOverlay.Visible = false
 			win.Visible = true
 			cursorSink.Visible = true
@@ -1693,12 +1697,16 @@ function OceanUI:CreateWindow(config)
 				rW = win:GetAttribute("RestoreSizeX") or math.clamp(config.Size[1], 200, vp.X - 20)
 				rH = win:GetAttribute("RestoreSizeY") or math.clamp(config.Size[2], 200, vp.Y - 40)
 			end
-			tw(win,{Size=UDim2.new(0, rW, 0, rH), BackgroundTransparency=0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-			task.delay(0.3, function()
+			local tr = tw(win,{Size=UDim2.new(0, rW, 0, rH), BackgroundTransparency=0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			tr.Completed:Connect(function()
 				win.ClipsDescendants = false
 				tw(outerGlow, {BackgroundTransparency=0.93}, 0.15):Play()
+				minimized = false
+				animating = false
 			end)
+			tr:Play()
 		end)
+		tp:Play()
 	end
 
 	minBtn.MouseButton1Click:Connect(doMinimize)
