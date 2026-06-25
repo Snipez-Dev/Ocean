@@ -1662,12 +1662,16 @@ function OceanUI:CreateWindow(config)
 		local curSize = win.Size
 		win:SetAttribute("RestoreSizeX", curSize.X.Offset)
 		win:SetAttribute("RestoreSizeY", curSize.Y.Offset)
-		tw(win,{Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
+		
+		minOverlay.Visible = true
+		minOverlay.ZIndex = 1000
+		minOverlay.BackgroundTransparency = 0
+		minOverlay.Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)
+		tw(minOverlay, {Position = savedMinPos}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
+
+		tw(win, {Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
 		task.delay(0.25, function()
 			win.Visible = false
-			minOverlay.Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)
-			minOverlay.Visible = true
-			tw(minOverlay, {Position = savedMinPos}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
 			win.ClipsDescendants = false
 		end)
 	end
