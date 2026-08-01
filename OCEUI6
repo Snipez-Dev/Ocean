@@ -26,7 +26,7 @@ local function isMobile()
 	return UIS.TouchEnabled and not UIS.MouseEnabled or vp.X < 600
 end
 
-local LOGO_ASSET = "135460265523477"
+local LOGO_ASSET = "110034487018208"
 local function assetImage(id)
 	id = tostring(id)
 	if getcustomasset then
