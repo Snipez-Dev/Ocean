@@ -1265,7 +1265,7 @@ function OceanUI:CreateWindow(config)
 		WIN_H  = config.Size and math.clamp(config.Size[2], 200, vp.Y - 40) or math.min(vp.Y - 40, 420)
 	end
 	local SIDE_W = math.clamp(math.floor(WIN_W * 0.25), 90, 170)
-	local TITLE  = config.Title or "Ocean"
+	local TITLE  = config.Title or "Vantix"
 
 	local existing = CoreGui:FindFirstChild("OceanUI")
 	if existing then existing:Destroy() end
@@ -1421,19 +1421,13 @@ function OceanUI:CreateWindow(config)
 
 	local logoWrap = frame(loadLayer,{
 		name="LW", colorKey="bg", trans=1,
-		size=UDim2.new(0,260,0,80),
+		size=UDim2.new(0,150,0,90),
 		pos=UDim2.new(0.5,0,0.5,-12), anchor=Vector2.new(0.5,0.5), z=31,
 	})
-	inst("UIListLayout",{
-		FillDirection=Enum.FillDirection.Horizontal,
-		HorizontalAlignment=Enum.HorizontalAlignment.Center,
-		VerticalAlignment=Enum.VerticalAlignment.Center,
-		Padding=UDim.new(0,-5),
-	},logoWrap)
 
+	-- two nested chevrons (wing motif), not literal side-by-side letters
 	local CHARS = {
-		{"}",74,-4,44}, {"<",67,0,38}, {"(",67,-5,34},
-		{"(",67,-5,34}, {"°",54,-1,30}, {">",67,0,38},
+		{"V",94,-10,1}, {"V",56,16,2},
 	}
 	local logoGrad = ColorSequence.new({
 		ColorSequenceKeypoint.new(0,   K.logoTop),
@@ -1442,12 +1436,16 @@ function OceanUI:CreateWindow(config)
 	})
 	local charDefs={}
 	for i,d in ipairs(CHARS) do
-		local ch,fs,yo,w=d[1],d[2],d[3],d[4]
-		local cf=frame(logoWrap,{name="cf"..i,colorKey="bg",trans=1,size=UDim2.new(0,w,0,80),z=32})
+		local ch,fs,yo,zo=d[1],d[2],d[3],d[4]
+		local cf=frame(logoWrap,{
+			name="cf"..i,colorKey="bg",trans=1,
+			size=UDim2.fromScale(1,1),pos=UDim2.fromScale(0.5,0.5),anchor=Vector2.new(0.5,0.5),
+			z=32+zo,
+		})
 		local cl=lbl(cf,{
-			text=ch,font=Enum.Font.Code,size=fs,colorKey="logoTop",trans=1,
-			sz=UDim2.new(0,100,0,80),pos=UDim2.new(0.5,0,0.5,yo),anchor=Vector2.new(0.5,0.5),
-			xa=Enum.TextXAlignment.Center,ya=Enum.TextYAlignment.Center,z=32,
+			text=ch,font=Enum.Font.GothamBlack,size=fs,colorKey="logoTop",trans=1,
+			sz=UDim2.fromScale(1,1),pos=UDim2.new(0.5,0,0.5,yo),anchor=Vector2.new(0.5,0.5),
+			xa=Enum.TextXAlignment.Center,ya=Enum.TextYAlignment.Center,z=32+zo,
 		})
 		local grad = inst("UIGradient",{Rotation=90,Color=logoGrad},cl)
 		registerThemeUpdater(function()
@@ -1461,7 +1459,7 @@ function OceanUI:CreateWindow(config)
 	end
 
 	local loadSub=lbl(loadLayer,{
-		text="OCEAN  DEVELOPMENT",font=Enum.Font.Gotham,
+		text="VANTIX  DEVELOPMENT",font=Enum.Font.Gotham,
 		size=12,colorKey="muted",trans=1,
 		sz=UDim2.new(0,260,0,18),pos=UDim2.new(0.5,0,0.5,36),anchor=Vector2.new(0.5,0),
 		xa=Enum.TextXAlignment.Center,z=32,
@@ -1899,32 +1897,30 @@ function OceanUI:CreateWindow(config)
 			ColorSequenceKeypoint.new(0.45,K.logoMid),
 			ColorSequenceKeypoint.new(1,   K.logoBot),
 		})
+		-- same nested-chevron wing motif as the splash logo, blown up and faded as a watermark
 		local BG_CHARS = {
-			{"}",  96,   0,  -5, 54},
-			{"<",  86,  56,   0, 48},
-			{"(",  86, 106,  -1, 42},
-			{"(",  86, 150,  -1, 42},
-			{"°",  66, 194,  -1, 38},
-			{">",  86, 234,   6, 48},
+			{"V", 230, -14, 1},
+			{"V", 140,  30, 2},
 		}
 		local bgWrap = frame(contentArea,{
 			name="BgLogo", colorKey="bg", trans=1,
-			size=UDim2.new(0,320,0,BG_H),
+			size=UDim2.new(0,280,0,BG_H),
 			pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=1,
 		})
 		bgWrap.Rotation = -35
 		for _,d in ipairs(BG_CHARS) do
-			local ch,fs,xo,yo,w = d[1],d[2],d[3],d[4],d[5]
+			local ch,fs,yo,zo = d[1],d[2],d[3],d[4]
 			local cl = inst("TextLabel",{
 				BackgroundTransparency=1,
-				Font=Enum.Font.Code, Text=ch,
+				Font=Enum.Font.GothamBlack, Text=ch,
 				TextColor3=K.white,
 				TextSize=fs, TextTransparency=0.88,
 				TextXAlignment=Enum.TextXAlignment.Center,
 				TextYAlignment=Enum.TextYAlignment.Center,
-				Size=UDim2.new(0,w,0,BG_H),
-				Position=UDim2.new(0,xo,0,yo),
-				ZIndex=1,
+				Size=UDim2.fromScale(1,1),
+				Position=UDim2.new(0.5,0,0.5,yo),
+				AnchorPoint=Vector2.new(0.5,0.5),
+				ZIndex=zo,
 			}, bgWrap)
 			local grad = inst("UIGradient",{Rotation=90,Color=bgGrad},cl)
 			registerThemeUpdater(function()

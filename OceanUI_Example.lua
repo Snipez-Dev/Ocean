@@ -15,13 +15,13 @@ Window:CreateTag("v7.0",    Color3.fromRGB(60, 120, 210),  Color3.fromRGB(200, 2
 Window:Notify({
 	Title    = "Welcome",
 	Text     = "Library loaded successfully!",
-	Icon     = "check",
+	Icon     = "check", 
 	Duration = 4
 })
 
 local MainTab = Window:AddTab("Main", "home")
 
-MainTab:AddLabel("Welcome to the OceanUI Showcase", "info")
+MainTab:AddLabel("Welcome to the Vantix Showcase", "info")
 MainTab:AddSeparator()
 
 local godmode = MainTab:AddToggle({
