@@ -1431,7 +1431,7 @@ function OceanUI:CreateWindow(config)
 
 	local logoWrap = frame(loadLayer,{
 		name="LW", colorKey="bg", trans=1,
-		size=UDim2.new(0,120,0,90),
+		size=UDim2.new(0,140,0,105),
 		pos=UDim2.new(0.5,0,0.5,-12), anchor=Vector2.new(0.5,0.5), z=31,
 	})
 
@@ -1439,7 +1439,7 @@ function OceanUI:CreateWindow(config)
 		Name="LogoMark", BackgroundTransparency=1,
 		Image=assetImage(LOGO_ASSET), ImageTransparency=1,
 		ImageColor3=K.logoTop, ScaleType=Enum.ScaleType.Fit,
-		Size=UDim2.fromScale(0.72,0.72),
+		Size=UDim2.fromScale(0.8,0.8),
 		Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5),
 		ZIndex=32,
 	}, logoWrap)
@@ -1889,7 +1889,8 @@ function OceanUI:CreateWindow(config)
 	rnd(contentArea, 10)
 
 	do
-		local BG_H = MOBILE and 70 or 90
+		local BG_H = MOBILE and 150 or 220
+		local BG_W = MOBILE and 470 or 680
 		local bgGrad = ColorSequence.new({
 			ColorSequenceKeypoint.new(0,   K.logoTop),
 			ColorSequenceKeypoint.new(0.45,K.logoMid),
@@ -1898,10 +1899,9 @@ function OceanUI:CreateWindow(config)
 		-- same asset mark as the splash logo, blown up and faded as a background watermark
 		local bgWrap = frame(contentArea,{
 			name="BgLogo", colorKey="bg", trans=1,
-			size=UDim2.new(0,280,0,BG_H),
+			size=UDim2.new(0,BG_W,0,BG_H),
 			pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=1,
 		})
-		bgWrap.Rotation = -35
 		local bgImg = inst("ImageLabel",{
 			Name="BgMark", BackgroundTransparency=1,
 			Image=assetImage(LOGO_ASSET), ImageColor3=K.white, ImageTransparency=0.88,
