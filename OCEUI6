@@ -26,6 +26,16 @@ local function isMobile()
 	return UIS.TouchEnabled and not UIS.MouseEnabled or vp.X < 600
 end
 
+local LOGO_ASSET = "135460265523477"
+local function assetImage(id)
+	id = tostring(id)
+	if getcustomasset then
+		local ok, res = pcall(getcustomasset, id)
+		if ok and res then return res end
+	end
+	return "rbxassetid://"..id
+end
+
 local CORNER = 10
 
 local THEMES = {
@@ -1421,42 +1431,30 @@ function OceanUI:CreateWindow(config)
 
 	local logoWrap = frame(loadLayer,{
 		name="LW", colorKey="bg", trans=1,
-		size=UDim2.new(0,150,0,90),
+		size=UDim2.new(0,120,0,90),
 		pos=UDim2.new(0.5,0,0.5,-12), anchor=Vector2.new(0.5,0.5), z=31,
 	})
 
-	-- two nested chevrons (wing motif), not literal side-by-side letters
-	local CHARS = {
-		{"V",94,-10,1}, {"V",56,16,2},
-	}
-	local logoGrad = ColorSequence.new({
+	local logoImg = inst("ImageLabel",{
+		Name="LogoMark", BackgroundTransparency=1,
+		Image=assetImage(LOGO_ASSET), ImageTransparency=1,
+		ImageColor3=K.logoTop, ScaleType=Enum.ScaleType.Fit,
+		Size=UDim2.fromScale(0.72,0.72),
+		Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5),
+		ZIndex=32,
+	}, logoWrap)
+	local logoGrad = inst("UIGradient",{Rotation=90,Color=ColorSequence.new({
 		ColorSequenceKeypoint.new(0,   K.logoTop),
 		ColorSequenceKeypoint.new(0.45,K.logoMid),
 		ColorSequenceKeypoint.new(1,   K.logoBot),
-	})
-	local charDefs={}
-	for i,d in ipairs(CHARS) do
-		local ch,fs,yo,zo=d[1],d[2],d[3],d[4]
-		local cf=frame(logoWrap,{
-			name="cf"..i,colorKey="bg",trans=1,
-			size=UDim2.fromScale(1,1),pos=UDim2.fromScale(0.5,0.5),anchor=Vector2.new(0.5,0.5),
-			z=32+zo,
+	})}, logoImg)
+	registerThemeUpdater(function()
+		logoGrad.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0,   K.logoTop),
+			ColorSequenceKeypoint.new(0.45,K.logoMid),
+			ColorSequenceKeypoint.new(1,   K.logoBot),
 		})
-		local cl=lbl(cf,{
-			text=ch,font=Enum.Font.GothamBlack,size=fs,colorKey="logoTop",trans=1,
-			sz=UDim2.fromScale(1,1),pos=UDim2.new(0.5,0,0.5,yo),anchor=Vector2.new(0.5,0.5),
-			xa=Enum.TextXAlignment.Center,ya=Enum.TextYAlignment.Center,z=32+zo,
-		})
-		local grad = inst("UIGradient",{Rotation=90,Color=logoGrad},cl)
-		registerThemeUpdater(function()
-			grad.Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0,   K.logoTop),
-				ColorSequenceKeypoint.new(0.45,K.logoMid),
-				ColorSequenceKeypoint.new(1,   K.logoBot),
-			})
-		end, grad)
-		charDefs[i]={label=cl,yo=yo}
-	end
+	end, logoGrad)
 
 	local loadSub=lbl(loadLayer,{
 		text="VANTIX  DEVELOPMENT",font=Enum.Font.Gotham,
@@ -1897,41 +1895,29 @@ function OceanUI:CreateWindow(config)
 			ColorSequenceKeypoint.new(0.45,K.logoMid),
 			ColorSequenceKeypoint.new(1,   K.logoBot),
 		})
-		-- same nested-chevron wing motif as the splash logo, blown up and faded as a watermark
-		local BG_CHARS = {
-			{"V", 230, -14, 1},
-			{"V", 140,  30, 2},
-		}
+		-- same asset mark as the splash logo, blown up and faded as a background watermark
 		local bgWrap = frame(contentArea,{
 			name="BgLogo", colorKey="bg", trans=1,
 			size=UDim2.new(0,280,0,BG_H),
 			pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=1,
 		})
 		bgWrap.Rotation = -35
-		for _,d in ipairs(BG_CHARS) do
-			local ch,fs,yo,zo = d[1],d[2],d[3],d[4]
-			local cl = inst("TextLabel",{
-				BackgroundTransparency=1,
-				Font=Enum.Font.GothamBlack, Text=ch,
-				TextColor3=K.white,
-				TextSize=fs, TextTransparency=0.88,
-				TextXAlignment=Enum.TextXAlignment.Center,
-				TextYAlignment=Enum.TextYAlignment.Center,
-				Size=UDim2.fromScale(1,1),
-				Position=UDim2.new(0.5,0,0.5,yo),
-				AnchorPoint=Vector2.new(0.5,0.5),
-				ZIndex=zo,
-			}, bgWrap)
-			local grad = inst("UIGradient",{Rotation=90,Color=bgGrad},cl)
-			registerThemeUpdater(function()
-				cl.TextColor3 = K.white
-				grad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0,   K.logoTop),
-					ColorSequenceKeypoint.new(0.45,K.logoMid),
-					ColorSequenceKeypoint.new(1,   K.logoBot),
-				})
-			end, cl)
-		end
+		local bgImg = inst("ImageLabel",{
+			Name="BgMark", BackgroundTransparency=1,
+			Image=assetImage(LOGO_ASSET), ImageColor3=K.white, ImageTransparency=0.88,
+			ScaleType=Enum.ScaleType.Fit,
+			Size=UDim2.fromScale(1,1), Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5),
+			ZIndex=1,
+		}, bgWrap)
+		local grad = inst("UIGradient",{Rotation=90,Color=bgGrad},bgImg)
+		registerThemeUpdater(function()
+			bgImg.ImageColor3 = K.white
+			grad.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0,   K.logoTop),
+				ColorSequenceKeypoint.new(0.45,K.logoMid),
+				ColorSequenceKeypoint.new(1,   K.logoBot),
+			})
+		end, bgImg)
 
 		local bgScale = inst("UIScale",{Scale=1}, bgWrap)
 		local _baseContentW = WIN_W - contentX
@@ -2715,6 +2701,7 @@ function OceanUI:CreateWindow(config)
 		pcall(function()
 			for _,d in ipairs(loadLayer:GetDescendants()) do
 				if d:IsA("TextLabel") then tw(d,{TextTransparency=1},0.2):Play()
+				elseif d:IsA("ImageLabel") then tw(d,{ImageTransparency=1},0.2):Play()
 				elseif d:IsA("Frame") then tw(d,{BackgroundTransparency=1},0.2):Play() end
 			end
 			tw(loadLayer,{BackgroundTransparency=1},0.22):Play()
@@ -2728,21 +2715,14 @@ function OceanUI:CreateWindow(config)
 			tw(win,{Size=UDim2.new(0,WIN_W,0,WIN_H)},0.38,Enum.EasingStyle.Back,Enum.EasingDirection.Out):Play()
 			task.wait(0.28)
 
-			local STEP=0.11
-			for i,d in ipairs(charDefs) do
-				task.delay((i-1)*STEP,function()
-					pcall(function()
-						d.label.Position=UDim2.new(0.5,0,0.5,d.yo+10)
-						tw(d.label,{TextTransparency=0,Position=UDim2.new(0.5,0,0.5,d.yo)},0.44,Enum.EasingStyle.Quint):Play()
-					end)
-				end)
-			end
+			logoImg.Position=UDim2.new(0.5,0,0.5,10)
+			tw(logoImg,{ImageTransparency=0,Position=UDim2.new(0.5,0,0.5,0)},0.44,Enum.EasingStyle.Quint):Play()
 
-			task.delay(#CHARS*STEP+0.06,function()
+			task.delay(0.5,function()
 				pcall(function() tw(loadSub,{TextTransparency=0},0.4):Play() end)
 			end)
 
-			local shimAt=#CHARS*STEP+0.44
+			local shimAt=0.9
 			task.delay(shimAt,function()
 				pcall(function()
 					shimF.BackgroundTransparency=0
