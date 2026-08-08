@@ -1525,6 +1525,7 @@ function OceanUI:CreateWindow(config)
 		text=TITLE, font=Enum.Font.GothamBold, size=16, colorKey="white",
 		sz=UDim2.new(0,200,1,0), pos=UDim2.new(0,16,0,0), z=6,
 	})
+	titleLbl.TextTruncate = Enum.TextTruncate.AtEnd
 
 	local tagContainer = frame(titlebar,{
 		name="TagContainer", colorKey="bg", trans=1,
@@ -1878,12 +1879,13 @@ function OceanUI:CreateWindow(config)
 		rnd(avatarImg,99)
 
 		local txtX = AVA + 16
-		lbl(profileSection,{
+		local nameLbl = lbl(profileSection,{
 			text=player.DisplayName,
 			font=Enum.Font.GothamBold, size=15, colorKey="text",
 			sz=UDim2.new(1,-txtX-4,0,18),
 			pos=UDim2.new(0,txtX,0.5,-15), z=7,
 		})
+		nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
 
 		local execLbl = lbl(profileSection,{
 			text="",
@@ -1891,6 +1893,7 @@ function OceanUI:CreateWindow(config)
 			sz=UDim2.new(1,-txtX-4,0,15),
 			pos=UDim2.new(0,txtX,0.5,5), z=7,
 		})
+		execLbl.TextTruncate = Enum.TextTruncate.AtEnd
 
 		task.spawn(function()
 			local ok, thumb = pcall(function()
@@ -2099,6 +2102,7 @@ function OceanUI:CreateWindow(config)
 				text=tabName,font=Enum.Font.GothamMedium,size=SIDE_W < 140 and 12 or 15,colorKey="sub",
 				sz=UDim2.new(1,0,1,0),pos=UDim2.new(0,(iconName and lucide) and (SIDE_W < 140 and 28 or 38) or (SIDE_W < 140 and 8 or 16),0,0),z=7,
 			})
+			nl.TextTruncate = Enum.TextTruncate.AtEnd
 
 			local iconImg
 			if iconName and lucide then
