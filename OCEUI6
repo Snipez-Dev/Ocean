@@ -38,6 +38,7 @@ end
 
 local CORNER = 10
 local RISKY  = Color3.fromRGB(235, 80, 80)
+local ROW_PAD = 14
 
 local THEMES = {
 	Ocean = {
@@ -638,11 +639,11 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 
 	local header = btn(wrap,{
 		name="DHead", text=selected, font=Enum.Font.GothamMedium, size=13,
-		colorKey="raised", tcKey="text",
+		colorKey="bg", tcKey="text",
 		sz=UDim2.new(1,0,0,DROP_H), z=11,
 	})
 	header.TextTruncate = Enum.TextTruncate.AtEnd
-	rnd(header,5)
+	rnd(header,6)
 	brd(header,"border",1)
 
 	local arrow
@@ -689,7 +690,7 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 		end
 	end)
 
-	rnd(listFrame,5)
+	rnd(listFrame,8)
 	brd(listFrame,"border",1)
 	listFrame.Visible = false
 
@@ -702,6 +703,7 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 	local function closeList()
 		open = false
 		parent.ZIndex = 7
+		if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 7 end
 		setScrollPadding(0)
 		tw(arrow,{Rotation=0},0.15):Play()
 		local t = tw(listFrame,{Size=UDim2.new(0,LIST_W,0,0)},0.15)
@@ -714,27 +716,39 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 			if c:IsA("TextButton") then c:Destroy() end
 		end
 		for i, opt in ipairs(options) do
+			local isSel = (opt == selected)
 			local ob = btn(listFrame,{
 				name="Opt_"..opt, text=opt, font=Enum.Font.GothamMedium, size=13,
-				colorKey="raised", tcKey="sub",
+				colorKey="raised", tcKey=isSel and "white" or "sub",
 				sz=UDim2.new(1,0,0,30), z=listZ+1,
 				xa=Enum.TextXAlignment.Left,
 			})
+			ob:SetAttribute("tcKey", isSel and "white" or "sub")
 			pad(ob,10,0,0,0)
 			ob.LayoutOrder = i
+
+			local check = lbl(ob, {
+				name = "Check", text = "✓", font = Enum.Font.GothamBold, size = 12, colorKey = "white",
+				sz = UDim2.new(0, 20, 1, 0), pos = UDim2.new(1, -24, 0, 0), z = listZ + 2,
+				xa = Enum.TextXAlignment.Right,
+			})
+			check.Visible = isSel
+
 			ob.MouseEnter:Connect(function()
 				ob:SetAttribute("Hovered", true)
 				tw(ob,{BackgroundColor3=K.border,TextColor3=K.white},0.08):Play()
 			end)
 			ob.MouseLeave:Connect(function()
 				ob:SetAttribute("Hovered", false)
-				tw(ob,{BackgroundColor3=K.raised,TextColor3=K.sub},0.08):Play()
+				local tc = ob:GetAttribute("tcKey")
+				tw(ob,{BackgroundColor3=K.raised,TextColor3=K[tc]},0.08):Play()
 			end)
 			ob.MouseButton1Click:Connect(function()
 				selected = opt
 				header.Text = opt
 				closeList()
 				changedEvent:Fire(selected)
+				populateOptions()
 			end)
 		end
 	end
@@ -746,6 +760,7 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 		open = not open
 		if open then
 			parent.ZIndex = 110
+			if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 110 end
 			listFrame.Visible = true
 			local targetH = math.min(210, #options * 30)
 			setScrollPadding(targetH)
@@ -766,6 +781,7 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 				selected = opt
 			end
 			header.Text = selected
+			populateOptions()
 			changedEvent:Fire(selected)
 		end,
 		setOptions = function(newOpts)
@@ -852,11 +868,11 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 
 	local header = btn(wrap,{
 		name="DHead", text=getHeaderText(), font=Enum.Font.GothamMedium, size=13,
-		colorKey="raised", tcKey="text",
+		colorKey="bg", tcKey="text",
 		sz=UDim2.new(1,0,0,DROP_H), z=11,
 	})
 	header.TextTruncate = Enum.TextTruncate.AtEnd
-	rnd(header,5)
+	rnd(header,6)
 	brd(header,"border",1)
 
 	local arrow
@@ -903,7 +919,7 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 		end
 	end)
 
-	rnd(listFrame,5)
+	rnd(listFrame,8)
 	brd(listFrame,"border",1)
 	listFrame.Visible = false
 
@@ -916,6 +932,7 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 	local function closeList()
 		open = false
 		parent.ZIndex = 7
+		if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 7 end
 		setScrollPadding(0)
 		tw(arrow,{Rotation=0},0.15):Play()
 		local t = tw(listFrame,{Size=UDim2.new(0,LIST_W,0,0)},0.15)
@@ -972,6 +989,7 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 		open = not open
 		if open then
 			parent.ZIndex = 110
+			if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 110 end
 			listFrame.Visible = true
 			local targetH = math.min(210, #options * 30)
 			setScrollPadding(targetH)
@@ -1037,7 +1055,7 @@ local function makeTextBox(parent, placeholder, defaultText)
 	local box = inst("TextBox",{
 		Name = "InputBox",
 		AutoLocalize = false,
-		BackgroundColor3 = K.raised,
+		BackgroundColor3 = K.bg,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		Font = Enum.Font.GothamMedium,
@@ -1052,7 +1070,7 @@ local function makeTextBox(parent, placeholder, defaultText)
 		Size = UDim2.new(0,160,0,32),
 		ZIndex = 10,
 	}, parent)
-	rnd(box,5)
+	rnd(box,6)
 	brd(box,"border",1)
 	pad(box,8,8,0,0)
 
@@ -1060,12 +1078,12 @@ local function makeTextBox(parent, placeholder, defaultText)
 		tw(box,{BackgroundColor3=K.border},0.1):Play()
 	end)
 	box.FocusLost:Connect(function(enterPressed)
-		tw(box,{BackgroundColor3=K.raised},0.1):Play()
+		tw(box,{BackgroundColor3=K.bg},0.1):Play()
 		changedEvent:Fire(box.Text, enterPressed)
 	end)
 
 	registerThemeUpdater(function()
-		box.BackgroundColor3 = K.raised
+		box.BackgroundColor3 = K.bg
 		box.PlaceholderColor3 = K.muted
 		box.TextColor3 = K.text
 	end, box)
@@ -1095,13 +1113,13 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 
 	local preview = btn(wrap, {
 		name="Preview", text="", color=col,
-		sz=UDim2.new(1,0,0,26), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0,0.5), z=11, 
+		sz=UDim2.new(1,0,0,26), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0,0.5), z=11,
 	})
-	rnd(preview, 5)
+	rnd(preview, 6)
 	brd(preview, "border", 1)
 
 	local panel = frame(wrap, {
-		name="Panel", colorKey="surface",
+		name="Panel", colorKey="raised",
 		size=UDim2.new(0, 180, 0, 160), pos=UDim2.new(0, -120, 0, PICKER_H + 2), z=150,
 	})
 	
@@ -1121,7 +1139,7 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		end
 	end)
 
-	rnd(panel, 5)
+	rnd(panel, 8)
 	brd(panel, "border", 1)
 	panel.Visible = false
 
@@ -1129,14 +1147,14 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		Name="SVMap", BackgroundColor3=Color3.fromHSV(h,1,1), Text="",
 		Size=UDim2.new(1, -16, 0, 100), Position=UDim2.new(0, 8, 0, 8), ZIndex=101, AutoButtonColor=false,
 	}, panel)
-	rnd(svMap, 4)
-	
+	rnd(svMap, 6)
+
 	local wg = frame(svMap, { name="WhiteGrad", size=UDim2.fromScale(1,1), color=Color3.new(1,1,1), z=102 })
-	rnd(wg, 4)
+	rnd(wg, 6)
 	inst("UIGradient", { Color=ColorSequence.new(Color3.new(1,1,1)), Transparency=NumberSequence.new{ NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(1,1) } }, wg)
-	
+
 	local bg = frame(svMap, { name="BlackGrad", size=UDim2.fromScale(1,1), color=Color3.new(0,0,0), z=103 })
-	rnd(bg, 4)
+	rnd(bg, 6)
 	inst("UIGradient", { Color=ColorSequence.new(Color3.new(0,0,0)), Rotation=90, Transparency=NumberSequence.new{ NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(1,0) } }, bg)
 
 	local svCursor = frame(bg, {
@@ -1149,7 +1167,7 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		Name="HueTrack", BackgroundColor3=Color3.new(1,1,1), Text="",
 		Size=UDim2.new(1, -16, 0, 14), Position=UDim2.new(0, 8, 0, 116), ZIndex=101, AutoButtonColor=false,
 	}, panel)
-	rnd(hueTrack, 4)
+	rnd(hueTrack, 7)
 	
 	local rainbow = ColorSequence.new{
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255,255,0)),
@@ -1212,6 +1230,7 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		open = false
 		panel.Visible = false
 		parent.ZIndex = 7
+		if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 7 end
 		setScrollPadding(0)
 	end
 
@@ -1220,6 +1239,7 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		open = not open
 		if open then
 			parent.ZIndex = 110
+			if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 110 end
 			panel.Visible = true
 			setScrollPadding(160)
 		else
@@ -1228,14 +1248,14 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 	end)
 	
 	local hexBox = inst("TextBox", {
-		BackgroundColor3 = K.surface, BorderSizePixel=0, TextColor3=K.text,
+		BackgroundColor3 = K.bg, BorderSizePixel=0, TextColor3=K.text,
 		Font = Enum.Font.Code, TextSize=11, Size=UDim2.new(1,-16,0,20),
 		Position=UDim2.new(0,8,0,134), ZIndex=101, ClearTextOnFocus=false
 	}, panel)
-	rnd(hexBox, 4)
+	rnd(hexBox, 6)
 	brd(hexBox, "border", 1)
 	registerThemeUpdater(function()
-		hexBox.BackgroundColor3 = K.surface
+		hexBox.BackgroundColor3 = K.bg
 		hexBox.TextColor3 = K.text
 	end, hexBox)
 	
@@ -1713,7 +1733,7 @@ function OceanUI:CreateWindow(config)
 	local function doRestore()
 		if not minimized or animating then return end
 		animating = true
-		
+
 		local tp = tw(minOverlay, {Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 		tp.Completed:Connect(function()
 			minOverlay.Visible = false
@@ -2081,7 +2101,7 @@ function OceanUI:CreateWindow(config)
 		inst("UIListLayout",{
 			FillDirection=Enum.FillDirection.Vertical,
 			SortOrder=Enum.SortOrder.LayoutOrder,
-			Padding=UDim.new(0,3),
+			Padding=UDim.new(0,4),
 		},scroll)
 
 		if sidebar then
@@ -2129,15 +2149,52 @@ function OceanUI:CreateWindow(config)
 
 		local Tab = {}
 		local rowCounter = 0
+		local currentGroup = nil
+		local groupRowCounter = 0
+
+		local function getGroup()
+			local isFirst = not currentGroup
+			if isFirst then
+				rowCounter = rowCounter + 1
+				groupRowCounter = 0
+				currentGroup = frame(scroll, {
+					name="Group_"..rowCounter, colorKey="raised",
+					size=UDim2.new(1,0,0,0), z=7,
+				})
+				currentGroup.LayoutOrder = rowCounter
+				currentGroup.AutomaticSize = Enum.AutomaticSize.Y
+				rnd(currentGroup, 8)
+				local groupStroke = brd(currentGroup, "border", 1)
+				groupStroke.Transparency = 0.5
+				inst("UIListLayout",{
+					FillDirection=Enum.FillDirection.Vertical,
+					SortOrder=Enum.SortOrder.LayoutOrder,
+					Padding=UDim.new(0,0),
+				}, currentGroup)
+			end
+			groupRowCounter = groupRowCounter + 1
+			return currentGroup, isFirst, groupRowCounter
+		end
+
+		local function endGroup()
+			currentGroup = nil
+		end
 
 		local function makeRow(title, subtitle, iconName, risky, tooltipText)
-			rowCounter = rowCounter + 1
+			local group, isFirst, orderInGroup = getGroup()
 			local rowH = subtitle and 54 or 42
-			local r = frame(scroll,{
+			local r = frame(group,{
 				name="Row_"..title, colorKey="bg", trans=1,
 				size=UDim2.new(1,0,0,rowH), z=7,
 			})
-			r.LayoutOrder = rowCounter
+			r.LayoutOrder = orderInGroup
+
+			if not isFirst then
+				frame(r,{
+					name="Div", colorKey="border", trans=0.5,
+					size=UDim2.new(1,0,0,1), pos=UDim2.new(0,0,0,0), z=8,
+				})
+			end
 
 			if tooltipText and tooltipText ~= "" then
 				r.MouseEnter:Connect(function(x, y) showTooltip(tooltipText, x, y) end)
@@ -2145,13 +2202,13 @@ function OceanUI:CreateWindow(config)
 				r.MouseLeave:Connect(hideTooltip)
 			end
 
-			local textOffset = (iconName and lucide) and 30 or 0
+			local textOffset = (iconName and lucide) and (ROW_PAD+28) or ROW_PAD
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
 					color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
-					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=8,
+					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,ROW_PAD,0.5,0), anchor=Vector2.new(0,0.5), z=8,
 				})
 			end
 
@@ -2168,22 +2225,23 @@ function OceanUI:CreateWindow(config)
 				})
 			end
 
-			frame(r,{
-				name="Div", colorKey="border", trans=0.45,
-				size=UDim2.new(1,0,0,1),
-				pos=UDim2.new(0,0,1,-1), z=8,
-			})
-
 			return r
 		end
 
 		local function makeSliderRow(title, iconName, risky, tooltipText)
-			rowCounter = rowCounter + 1
-			local r = frame(scroll,{
+			local group, isFirst, orderInGroup = getGroup()
+			local r = frame(group,{
 				name="SlRow_"..title, colorKey="bg", trans=1,
 				size=UDim2.new(1,0,0,60), z=7,
 			})
-			r.LayoutOrder = rowCounter
+			r.LayoutOrder = orderInGroup
+
+			if not isFirst then
+				frame(r,{
+					name="Div", colorKey="border", trans=0.5,
+					size=UDim2.new(1,0,0,1), pos=UDim2.new(0,0,0,0), z=8,
+				})
+			end
 
 			if tooltipText and tooltipText ~= "" then
 				r.MouseEnter:Connect(function(x, y) showTooltip(tooltipText, x, y) end)
@@ -2191,13 +2249,13 @@ function OceanUI:CreateWindow(config)
 				r.MouseLeave:Connect(hideTooltip)
 			end
 
-			local textOffset = (iconName and lucide) and 30 or 0
+			local textOffset = (iconName and lucide) and (ROW_PAD+28) or ROW_PAD
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
 					color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
-					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0,10), z=8,
+					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,ROW_PAD,0,10), z=8,
 				})
 			end
 
@@ -2207,12 +2265,6 @@ function OceanUI:CreateWindow(config)
 				sz=UDim2.new(1,0,0,20), pos=UDim2.new(0,textOffset,0,10), z=8,
 			})
 
-			frame(r,{
-				name="Div", colorKey="border", trans=0.45,
-				size=UDim2.new(1,0,0,1),
-				pos=UDim2.new(0,0,1,-1), z=8,
-			})
-
 			return r
 		end
 
@@ -2220,7 +2272,7 @@ function OceanUI:CreateWindow(config)
 			opts = opts or {}
 			local r = makeRow(opts.Title or "Toggle", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
 			local tog = makeToggle(r, opts.Default or false)
-			tog.frame.Position   = UDim2.new(1,0,0.5,0)
+			tog.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
 			tog.frame.AnchorPoint = Vector2.new(1,0.5)
 			tog.frame.ZIndex = 9
 
@@ -2246,7 +2298,8 @@ function OceanUI:CreateWindow(config)
 			opts = opts or {}
 			local r = makeSliderRow(opts.Title or "Slider", opts.Icon, opts.Risky, opts.Tooltip)
 			local sl = makeSlider(r, opts.Min or 0, opts.Max or 100, opts.Default or 0)
-			sl.frame.Position = UDim2.new(0,0,0,30)
+			sl.frame.Position = UDim2.new(0,ROW_PAD,0,30)
+			sl.frame.Size     = UDim2.new(1,-ROW_PAD*2,sl.frame.Size.Y.Scale,sl.frame.Size.Y.Offset)
 			sl.frame.ZIndex   = 8
 
 			local initVal = opts.Default or opts.Min or 0
@@ -2254,7 +2307,7 @@ function OceanUI:CreateWindow(config)
 				text=tostring(math.round(initVal)),
 				font=Enum.Font.GothamBold, size=13, colorKey="white",
 				sz=UDim2.new(0,55,0,20),
-				pos=UDim2.new(1,0,0,8), anchor=Vector2.new(1,0),
+				pos=UDim2.new(1,-ROW_PAD,0,8), anchor=Vector2.new(1,0),
 				xa=Enum.TextXAlignment.Right, z=9,
 			})
 			sl.changed:Connect(function(v)
@@ -2286,25 +2339,25 @@ function OceanUI:CreateWindow(config)
 
 			local ab = btn(r,{
 				text=btnText, font=Enum.Font.GothamMedium, size=12,
-				colorKey="raised", tcKey="white",
-				sz=UDim2.new(0,bW,0,28), pos=UDim2.new(1,0,0.5,0), anchor=Vector2.new(1,0.5), z=9,
+				colorKey="bg", tcKey="white",
+				sz=UDim2.new(0,bW,0,28), pos=UDim2.new(1,-ROW_PAD,0.5,0), anchor=Vector2.new(1,0.5), z=9,
 			})
-			rnd(ab,5)
+			rnd(ab,6)
 			brd(ab,"border",1)
 
-			ab.MouseEnter:Connect(function() 
+			ab.MouseEnter:Connect(function()
 				ab:SetAttribute("Hovered", true)
-				tw(ab,{BackgroundColor3=K.border},0.1):Play() 
+				tw(ab,{BackgroundColor3=K.border},0.1):Play()
 			end)
-			ab.MouseLeave:Connect(function() 
+			ab.MouseLeave:Connect(function()
 				ab:SetAttribute("Hovered", false)
-				tw(ab,{BackgroundColor3=K.raised},0.1):Play() 
+				tw(ab,{BackgroundColor3=K.bg},0.1):Play()
 			end)
 			ab.MouseButton1Click:Connect(function()
 				if opts.Callback then pcall(opts.Callback) end
 				tw(ab,{BackgroundColor3=K.white,TextColor3=K.black},0.08):Play()
-				task.delay(0.16,function() 
-					tw(ab,{BackgroundColor3=K.raised,TextColor3=K.white},0.12):Play() 
+				task.delay(0.16,function()
+					tw(ab,{BackgroundColor3=K.bg,TextColor3=K.white},0.12):Play()
 				end)
 			end)
 
@@ -2312,6 +2365,7 @@ function OceanUI:CreateWindow(config)
 		end
 
 		function Tab:AddLabel(text, iconName)
+			endGroup()
 			rowCounter = rowCounter + 1
 			local r = frame(scroll,{
 				name="LblRow", colorKey="bg", trans=1,
@@ -2355,7 +2409,7 @@ function OceanUI:CreateWindow(config)
 
 			local optionsList = opts.Options or opts.List or {"Option 1"}
 			local dd = makeDropdown(r, optionsList, opts.Default or 1, onOpenStart)
-			dd.frame.Position   = UDim2.new(1,0,0.5,0)
+			dd.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
 			dd.frame.AnchorPoint = Vector2.new(1,0.5)
 			dd.frame.ZIndex = 10
 
@@ -2384,7 +2438,7 @@ function OceanUI:CreateWindow(config)
 
 			local optionsList = opts.Options or opts.List or {"Option 1"}
 			local dd = makeMultiDropdown(r, optionsList, opts.Default or {}, onOpenStart)
-			dd.frame.Position   = UDim2.new(1,0,0.5,0)
+			dd.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
 			dd.frame.AnchorPoint = Vector2.new(1,0.5)
 			dd.frame.ZIndex = 10
 
@@ -2408,7 +2462,7 @@ function OceanUI:CreateWindow(config)
 			local r = makeRow(opts.Title or "Input", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
 
 			local tb = makeTextBox(r, opts.Placeholder, opts.Default)
-			tb.frame.Position   = UDim2.new(1,0,0.5,0)
+			tb.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
 			tb.frame.AnchorPoint = Vector2.new(1,0.5)
 			tb.frame.ZIndex = 10
 
@@ -2437,7 +2491,7 @@ function OceanUI:CreateWindow(config)
 			end
 
 			local cp = makeColorPicker(r, defaultColor, onOpenStart)
-			cp.frame.Position   = UDim2.new(1,0,0.5,0)
+			cp.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
 			cp.frame.AnchorPoint = Vector2.new(1,0.5)
 			cp.frame.ZIndex = 10
 
@@ -2463,11 +2517,11 @@ function OceanUI:CreateWindow(config)
 			local keyBtn = btn(r,{
 				text = currentKey == Enum.KeyCode.Unknown and "None" or currentKey.Name,
 				font=Enum.Font.GothamMedium, size=13,
-				colorKey="raised", tcKey="sub",
+				colorKey="bg", tcKey="sub",
 				sz=UDim2.new(0,90,0,28),
-				pos=UDim2.new(1,0,0.5,0), anchor=Vector2.new(1,0.5), z=10,
+				pos=UDim2.new(1,-ROW_PAD,0.5,0), anchor=Vector2.new(1,0.5), z=10,
 			})
-			rnd(keyBtn,5)
+			rnd(keyBtn,6)
 			brd(keyBtn,"border",1)
 
 			local listening = false
@@ -2495,7 +2549,7 @@ function OceanUI:CreateWindow(config)
 					end
 					listening = false
 					keyBtn:SetAttribute("Hovered", false)
-					tw(keyBtn,{BackgroundColor3=K.raised},0.1):Play()
+					tw(keyBtn,{BackgroundColor3=K.bg},0.1):Play()
 					changedEvent:Fire(currentKey)
 				end
 			end)
@@ -2512,6 +2566,7 @@ function OceanUI:CreateWindow(config)
 		end
 
 		function Tab:AddSeparator()
+			endGroup()
 			rowCounter = rowCounter + 1
 			local r = frame(scroll,{
 				name="Sep", colorKey="bg", trans=1,

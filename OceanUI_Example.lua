@@ -225,10 +225,10 @@ local configName = SettingsTab:AddTextBox({
 
 local uiKeybind = SettingsTab:AddKeybind({
 	Title    = "Toggle UI Keybind",
-	Subtitle = "Press RightShift to hide",
+	Subtitle = "Press Insert to hide (independent of the window's built-in toggle key)",
 	Icon     = "keyboard",
-	Default  = Enum.KeyCode.RightShift,
-	Tooltip  = "Rebind the key that hides/shows the whole window",
+	Default  = Enum.KeyCode.Insert,
+	Tooltip  = "Standalone AddKeybind demo, separate from Window's own toggle key",
 	Callback = function()
 		local sg = game:GetService("CoreGui"):FindFirstChild("OceanUI")
 			or game.Players.LocalPlayer.PlayerGui:FindFirstChild("OceanUI")
