@@ -53,10 +53,10 @@ local library = {
         ['ping'] = 0;
     };
     images = {
-        ['gradientp90'] = 'https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/Assets/gradient90.png';
-        ['gradientp45'] = 'https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/Assets/gradient45.png';
-        ['colorhue'] = 'https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/Assets/colorhue.png';
-        ['colortrans'] = 'https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/Assets/colortrans.png';
+        ['gradientp90'] = 'https://raw.githubusercontent.com/Snipez-Dev/Vantix/refs/heads/main/Assets/gradient90.png';
+        ['gradientp45'] = 'https://raw.githubusercontent.com/Snipez-Dev/Vantix/refs/heads/main/Assets/gradient45.png';
+        ['colorhue'] = 'https://raw.githubusercontent.com/Snipez-Dev/Vantix/refs/heads/main/Assets/colorhue.png';
+        ['colortrans'] = 'https://raw.githubusercontent.com/Snipez-Dev/Vantix/refs/heads/main/Assets/colortrans.png';
     };
     numberStrings = {['Zero'] = 0, ['One'] = 1, ['Two'] = 2, ['Three'] = 3, ['Four'] = 4, ['Five'] = 5, ['Six'] = 6, ['Seven'] = 7, ['Eight'] = 8, ['Nine'] = 9};
     signal = (function()
@@ -101,7 +101,7 @@ local library = {
     open = false;
     opening = false;
     hasInit = false;
-    cheatname = startupArgs.cheatname or 'OceanUI';
+    cheatname = startupArgs.cheatname or 'VantixUI';
     gamename = startupArgs.gamename or 'universal';
     fileext = startupArgs.fileext or '.json';
 }
@@ -349,7 +349,7 @@ do
                 inst[prop] = val
             end)
             if not s then
-                warn('[OceanUI] ' .. tostring(e))
+                warn('[VantixUI] ' .. tostring(e))
             end
         end
         return inst
@@ -427,7 +427,7 @@ do
             
             return tween;
         else
-            warn('[OceanUI] unable to tween: invalid property '..tostring(prop)..' on '..tostring(obj))
+            warn('[VantixUI] unable to tween: invalid property '..tostring(prop)..' on '..tostring(obj))
         end
     end
 
@@ -770,13 +770,13 @@ library.utility = utility
 
 function library:Unload()
     library.unloaded:Fire()
-    actionservice:UnbindAction('OceanUIInput')
+    actionservice:UnbindAction('VantixUIInput')
     for _,c in next, self.connections do
         c:Disconnect()
     end
     table.clear(self.drawings)
     getgenv().library  = nil
-    getgenv().OceanPVP = nil
+    getgenv().VantixPVP = nil
 end
 
 function library:init()
@@ -883,7 +883,7 @@ function library:init()
     end
 
     local screenGui = Instance.new('ScreenGui')
-    screenGui.Name = 'OceanUI'
+    screenGui.Name = 'VantixUI'
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
     screenGui.ResetOnSpawn = false
     screenGui.IgnoreGuiInset = true
@@ -1002,11 +1002,11 @@ function library:init()
         if bool then
             screenGui.Enabled = true
             modalButton.Visible = true
-            actionservice:BindAction('OceanUIInput',
+            actionservice:BindAction('VantixUIInput',
                 function() return Enum.ContextActionResult.Sink end,
                 false, unpack(Enum.PlayerActions:GetEnumItems()))
         else
-            actionservice:UnbindAction('OceanUIInput')
+            actionservice:UnbindAction('VantixUIInput')
             modalButton.Visible = false
             task.delay(0.15, function()
                 if not library.open then
@@ -4999,7 +4999,7 @@ function library:CreateSettingsTab(menu)
     end});
 
     mainSection:AddButton({text = 'Copy Discord', flag = 'copydiscord', callback = function()
-        setclipboard('discord.gg/OceanUI')
+        setclipboard('discord.gg/VantixUI')
         library:SendNotification('Discord link copied!', 3)
     end})
 
@@ -5081,5 +5081,5 @@ function library:CreateSettingsTab(menu)
 end
 
 getgenv().library  = library
-getgenv().OceanPVP = library
+getgenv().VantixPVP = library
 return library

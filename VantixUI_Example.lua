@@ -1,10 +1,10 @@
-local url = "https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/OCEUI6"
+local url = "https://raw.githubusercontent.com/Snipez-Dev/Vantix/refs/heads/main/VantixUI6"
 
-local OceanUI = loadstring(game:HttpGet(url))()
+local VantixUI = loadstring(game:HttpGet(url))()
 
-local Window = OceanUI:CreateWindow({
+local Window = VantixUI:CreateWindow({
 	Title       = "Showcase",
-	Theme       = "Ocean",
+	Theme       = "Vantix",
 	AccentColor = Color3.fromRGB(255, 255, 255),
 	LogoID      = 110034487018208,
 	Size        = {820, 480},
@@ -162,7 +162,7 @@ VisualsTab:AddKeybind({
 local SettingsTab = Window:AddTab("Settings", "settings")
 
 local themeNames = {}
-for name in pairs(OceanUI.Themes) do
+for name in pairs(VantixUI.Themes) do
 	table.insert(themeNames, name)
 end
 table.sort(themeNames)
@@ -183,7 +183,7 @@ SettingsTab:AddDropdown({
 	Icon     = "droplet",
 	Options  = {"White", "Blue", "Red", "Green", "Purple"},
 	Default  = "White",
-	Tooltip  = "OceanUI:SetAccentColor overrides just the accent",
+	Tooltip  = "VantixUI:SetAccentColor overrides just the accent",
 	Callback = function(selected)
 		local colors = {
 			White  = Color3.fromRGB(255, 255, 255),
@@ -192,9 +192,9 @@ SettingsTab:AddDropdown({
 			Green  = Color3.fromRGB(80, 210, 120),
 			Purple = Color3.fromRGB(170, 110, 240),
 		}
-		OceanUI:SetAccentColor(colors[selected])
+		VantixUI:SetAccentColor(colors[selected])
 		Panel:SetTitle("Live Stats — "..selected)
-		accentRow:Set(toHex(OceanUI:GetAccentColor()))
+		accentRow:Set(toHex(VantixUI:GetAccentColor()))
 	end,
 })
 
@@ -230,8 +230,8 @@ local uiKeybind = SettingsTab:AddKeybind({
 	Default  = Enum.KeyCode.Insert,
 	Tooltip  = "Standalone AddKeybind demo, separate from Window's own toggle key",
 	Callback = function()
-		local sg = game:GetService("CoreGui"):FindFirstChild("OceanUI")
-			or game.Players.LocalPlayer.PlayerGui:FindFirstChild("OceanUI")
+		local sg = game:GetService("CoreGui"):FindFirstChild("VantixUI")
+			or game.Players.LocalPlayer.PlayerGui:FindFirstChild("VantixUI")
 		if sg then sg.Enabled = not sg.Enabled end
 	end,
 })
@@ -239,7 +239,7 @@ local uiKeybind = SettingsTab:AddKeybind({
 SettingsTab:AddSeparator()
 SettingsTab:AddLabel("Config System", "save")
 
-Window.ConfigManager:SetFolder("OceanUI_Examples")
+Window.ConfigManager:SetFolder("VantixUI_Examples")
 
 local function buildConfig(name)
 	local cfg = Window.ConfigManager:CreateConfig(name)
@@ -334,7 +334,7 @@ SettingsTab:AddButton({
 	end,
 })
 
-Panel = OceanUI:CreateNewWindow({ Title = "Live Stats — White", Size = {240} })
+Panel = VantixUI:CreateNewWindow({ Title = "Live Stats — White", Size = {240} })
 Panel:AddHeader("Session")
 local fpsRow  = Panel:AddRow("FPS")
 local pingRow = Panel:AddRow("Ping")
@@ -343,7 +343,7 @@ keyRow = Panel:AddRow("Toggle Key")
 Panel:AddSeparator()
 Panel:AddHeader("Window")
 accentRow = Panel:AddRow("Accent")
-accentRow:Set(toHex(OceanUI:GetAccentColor()))
+accentRow:Set(toHex(VantixUI:GetAccentColor()))
 Panel:AddSeparator()
 Panel:AddHeader("Player")
 local posRow = Panel:AddRow("Position")

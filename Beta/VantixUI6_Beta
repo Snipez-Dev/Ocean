@@ -1,3 +1,36 @@
+-- ===================== VantixUI6 BETA TEST CODE (runs first on load) =====================
+local RUN_BETA_TEST = true
+
+local function VantixUITest(VantixUI)
+	local Window = VantixUI:CreateWindow({ Title = "VantixUI6 Beta", Theme = "Vantix", Size = { 820, 480 } })
+	Window:CreateTag("Beta", Color3.fromRGB(240, 100, 100), Color3.fromRGB(255, 255, 255), "zap")
+	Window:Notify({ Title = "Beta", Text = "Test code loaded", Icon = "check", Duration = 3 })
+
+	local Main = Window:AddTab("Main", "home")
+	Main:AddLabel("VantixUI6 Beta showcase", "info")
+	Main:AddSeparator()
+	Main:AddToggle({ Title = "Toggle", Subtitle = "test", Icon = "shield", Default = false, Callback = function(s) print("toggle", s) end })
+	Main:AddSlider({ Title = "Slider", Icon = "activity", Min = 0, Max = 100, Default = 50, Callback = function(v) print("slider", v) end })
+	Main:AddButton({ Title = "Button", Icon = "mouse-pointer", Text = "Press", Callback = function() Window:Notify({ Title = "Pressed", Text = "ok" }) end })
+
+	local Elements = Window:AddTab("Elements", "layers")
+	Elements:AddDropdown({ Title = "Dropdown", Icon = "box", Options = { "A", "B", "C" }, Default = 1, Callback = function(v) print("dd", v) end })
+	Elements:AddMultiDropdown({ Title = "Multi", Icon = "layers", Options = { "X", "Y", "Z" }, Default = { "X" }, Callback = function(d) end })
+	Elements:AddColorPicker({ Title = "Color", Icon = "palette", Default = Color3.fromRGB(255, 0, 0), Callback = function(c) end })
+	Elements:AddTextBox({ Title = "Box", Icon = "file-text", Placeholder = "type", Default = "", Callback = function(t) end })
+	Elements:AddKeybind({ Title = "Keybind", Icon = "keyboard", Default = Enum.KeyCode.RightShift, Callback = function() end })
+
+	local panel = VantixUI:CreateNewWindow({ Title = "Panel", Size = { 280 }, Position = UDim2.new(0, 30, 0, 90) })
+	panel:AddRow("Status"):Set("ok")
+	panel:AddRow("Accent", "white"):Set("123")
+	panel:AddHeader("Section", "white")
+	panel:AddRow("Item 1"):Set("a")
+	panel:AddRow("Item 2"):Set("b")
+
+	return Window
+end
+-- ======================================================================================
+
 local Players      = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService   = game:GetService("RunService")
@@ -26,22 +59,10 @@ local function isMobile()
 	return UIS.TouchEnabled and not UIS.MouseEnabled or vp.X < 600
 end
 
-local LOGO_ASSET = "110034487018208"
-local function assetImage(id)
-	id = tostring(id)
-	if getcustomasset then
-		local ok, res = pcall(getcustomasset, id)
-		if ok and res then return res end
-	end
-	return "rbxassetid://"..id
-end
-
 local CORNER = 10
-local RISKY  = Color3.fromRGB(235, 80, 80)
-local ROW_PAD = 14
 
 local THEMES = {
-	Ocean = {
+	Vantix = {
 		black    = Color3.fromRGB(0,   0,   0  ),
 		bg       = Color3.fromRGB(18,  18,  18 ),
 		surface  = Color3.fromRGB(24,  24,  24 ),
@@ -57,7 +78,7 @@ local THEMES = {
 		logoBot  = Color3.fromRGB(90,  90,  90 ),
 	},
 
-	DeepOcean = {
+	DeepVantix = {
 		black    = Color3.fromRGB(0,   5,   15 ),
 		bg       = Color3.fromRGB(8,   18,  38 ),
 		surface  = Color3.fromRGB(12,  26,  52 ),
@@ -137,7 +158,7 @@ local THEMES = {
 		logoBot  = Color3.fromRGB(50,  70,  20 ),
 	},
 
-	OceanBlue = {
+	VantixBlue = {
 		black    = Color3.fromRGB(0,   10,  20 ),
 		bg       = Color3.fromRGB(10,  30,  50 ),
 		surface  = Color3.fromRGB(14,  40,  65 ),
@@ -218,9 +239,9 @@ local THEMES = {
 	},
 }
 
-local activeThemeName = "Ocean"
+local activeThemeName = "Vantix"
 local K = {}
-for k, v in pairs(THEMES.Ocean) do
+for k, v in pairs(THEMES.Vantix) do
 	K[k] = v
 end
 
@@ -230,7 +251,14 @@ local function registerThemeUpdater(callback, targetInstance)
 	pcall(callback)
 end
 
-local function refreshThemeUpdaters()
+local function setTheme(themeName)
+	if not THEMES[themeName] then return end
+	activeThemeName = themeName
+	local theme = THEMES[themeName]
+	for k, v in pairs(theme) do
+		K[k] = v
+	end
+	
 	local activeUpdaters = {}
 	for _, item in ipairs(themeUpdaters) do
 		local keep = true
@@ -245,32 +273,6 @@ local function refreshThemeUpdaters()
 		end
 	end
 	themeUpdaters = activeUpdaters
-end
-
-local function setTheme(themeName)
-	if not THEMES[themeName] then return end
-	activeThemeName = themeName
-	local theme = THEMES[themeName]
-	for k, v in pairs(theme) do
-		K[k] = v
-	end
-	refreshThemeUpdaters()
-end
-
-local function shade(color, factor)
-	local h, s, v = color:ToHSV()
-	v = math.clamp(v * factor, 0, 1)
-	if factor < 1 then s = math.clamp(s * 1.05, 0, 1) end
-	return Color3.fromHSV(h, s, v)
-end
-
-local function setAccentColor(color)
-	if typeof(color) ~= "Color3" then return end
-	K.white   = color
-	K.logoTop = shade(color, 1.35)
-	K.logoMid = color
-	K.logoBot = shade(color, 0.55)
-	refreshThemeUpdaters()
 end
 
 local function inst(cls, props, parent)
@@ -639,11 +641,11 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 
 	local header = btn(wrap,{
 		name="DHead", text=selected, font=Enum.Font.GothamMedium, size=13,
-		colorKey="bg", tcKey="text",
+		colorKey="raised", tcKey="text",
 		sz=UDim2.new(1,0,0,DROP_H), z=11,
 	})
 	header.TextTruncate = Enum.TextTruncate.AtEnd
-	rnd(header,6)
+	rnd(header,5)
 	brd(header,"border",1)
 
 	local arrow
@@ -690,7 +692,7 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 		end
 	end)
 
-	rnd(listFrame,8)
+	rnd(listFrame,5)
 	brd(listFrame,"border",1)
 	listFrame.Visible = false
 
@@ -703,7 +705,6 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 	local function closeList()
 		open = false
 		parent.ZIndex = 7
-		if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 7 end
 		setScrollPadding(0)
 		tw(arrow,{Rotation=0},0.15):Play()
 		local t = tw(listFrame,{Size=UDim2.new(0,LIST_W,0,0)},0.15)
@@ -716,39 +717,27 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 			if c:IsA("TextButton") then c:Destroy() end
 		end
 		for i, opt in ipairs(options) do
-			local isSel = (opt == selected)
 			local ob = btn(listFrame,{
 				name="Opt_"..opt, text=opt, font=Enum.Font.GothamMedium, size=13,
-				colorKey="raised", tcKey=isSel and "white" or "sub",
+				colorKey="raised", tcKey="sub",
 				sz=UDim2.new(1,0,0,30), z=listZ+1,
 				xa=Enum.TextXAlignment.Left,
 			})
-			ob:SetAttribute("tcKey", isSel and "white" or "sub")
 			pad(ob,10,0,0,0)
 			ob.LayoutOrder = i
-
-			local check = lbl(ob, {
-				name = "Check", text = "✓", font = Enum.Font.GothamBold, size = 12, colorKey = "white",
-				sz = UDim2.new(0, 20, 1, 0), pos = UDim2.new(1, -24, 0, 0), z = listZ + 2,
-				xa = Enum.TextXAlignment.Right,
-			})
-			check.Visible = isSel
-
 			ob.MouseEnter:Connect(function()
 				ob:SetAttribute("Hovered", true)
 				tw(ob,{BackgroundColor3=K.border,TextColor3=K.white},0.08):Play()
 			end)
 			ob.MouseLeave:Connect(function()
 				ob:SetAttribute("Hovered", false)
-				local tc = ob:GetAttribute("tcKey")
-				tw(ob,{BackgroundColor3=K.raised,TextColor3=K[tc]},0.08):Play()
+				tw(ob,{BackgroundColor3=K.raised,TextColor3=K.sub},0.08):Play()
 			end)
 			ob.MouseButton1Click:Connect(function()
 				selected = opt
 				header.Text = opt
 				closeList()
 				changedEvent:Fire(selected)
-				populateOptions()
 			end)
 		end
 	end
@@ -760,7 +749,6 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 		open = not open
 		if open then
 			parent.ZIndex = 110
-			if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 110 end
 			listFrame.Visible = true
 			local targetH = math.min(210, #options * 30)
 			setScrollPadding(targetH)
@@ -781,7 +769,6 @@ local function makeDropdown(parent, options, defaultIdx, onOpenStart)
 				selected = opt
 			end
 			header.Text = selected
-			populateOptions()
 			changedEvent:Fire(selected)
 		end,
 		setOptions = function(newOpts)
@@ -868,11 +855,11 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 
 	local header = btn(wrap,{
 		name="DHead", text=getHeaderText(), font=Enum.Font.GothamMedium, size=13,
-		colorKey="bg", tcKey="text",
+		colorKey="raised", tcKey="text",
 		sz=UDim2.new(1,0,0,DROP_H), z=11,
 	})
 	header.TextTruncate = Enum.TextTruncate.AtEnd
-	rnd(header,6)
+	rnd(header,5)
 	brd(header,"border",1)
 
 	local arrow
@@ -919,7 +906,7 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 		end
 	end)
 
-	rnd(listFrame,8)
+	rnd(listFrame,5)
 	brd(listFrame,"border",1)
 	listFrame.Visible = false
 
@@ -932,7 +919,6 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 	local function closeList()
 		open = false
 		parent.ZIndex = 7
-		if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 7 end
 		setScrollPadding(0)
 		tw(arrow,{Rotation=0},0.15):Play()
 		local t = tw(listFrame,{Size=UDim2.new(0,LIST_W,0,0)},0.15)
@@ -989,7 +975,6 @@ local function makeMultiDropdown(parent, options, defaultSelected, onOpenStart)
 		open = not open
 		if open then
 			parent.ZIndex = 110
-			if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 110 end
 			listFrame.Visible = true
 			local targetH = math.min(210, #options * 30)
 			setScrollPadding(targetH)
@@ -1055,7 +1040,7 @@ local function makeTextBox(parent, placeholder, defaultText)
 	local box = inst("TextBox",{
 		Name = "InputBox",
 		AutoLocalize = false,
-		BackgroundColor3 = K.bg,
+		BackgroundColor3 = K.raised,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		Font = Enum.Font.GothamMedium,
@@ -1070,7 +1055,7 @@ local function makeTextBox(parent, placeholder, defaultText)
 		Size = UDim2.new(0,160,0,32),
 		ZIndex = 10,
 	}, parent)
-	rnd(box,6)
+	rnd(box,5)
 	brd(box,"border",1)
 	pad(box,8,8,0,0)
 
@@ -1078,12 +1063,12 @@ local function makeTextBox(parent, placeholder, defaultText)
 		tw(box,{BackgroundColor3=K.border},0.1):Play()
 	end)
 	box.FocusLost:Connect(function(enterPressed)
-		tw(box,{BackgroundColor3=K.bg},0.1):Play()
+		tw(box,{BackgroundColor3=K.raised},0.1):Play()
 		changedEvent:Fire(box.Text, enterPressed)
 	end)
 
 	registerThemeUpdater(function()
-		box.BackgroundColor3 = K.bg
+		box.BackgroundColor3 = K.raised
 		box.PlaceholderColor3 = K.muted
 		box.TextColor3 = K.text
 	end, box)
@@ -1113,13 +1098,13 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 
 	local preview = btn(wrap, {
 		name="Preview", text="", color=col,
-		sz=UDim2.new(1,0,0,26), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0,0.5), z=11,
+		sz=UDim2.new(1,0,0,26), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0,0.5), z=11, 
 	})
-	rnd(preview, 6)
+	rnd(preview, 5)
 	brd(preview, "border", 1)
 
 	local panel = frame(wrap, {
-		name="Panel", colorKey="raised",
+		name="Panel", colorKey="surface",
 		size=UDim2.new(0, 180, 0, 160), pos=UDim2.new(0, -120, 0, PICKER_H + 2), z=150,
 	})
 	
@@ -1139,7 +1124,7 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		end
 	end)
 
-	rnd(panel, 8)
+	rnd(panel, 5)
 	brd(panel, "border", 1)
 	panel.Visible = false
 
@@ -1147,14 +1132,14 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		Name="SVMap", BackgroundColor3=Color3.fromHSV(h,1,1), Text="",
 		Size=UDim2.new(1, -16, 0, 100), Position=UDim2.new(0, 8, 0, 8), ZIndex=101, AutoButtonColor=false,
 	}, panel)
-	rnd(svMap, 6)
-
+	rnd(svMap, 4)
+	
 	local wg = frame(svMap, { name="WhiteGrad", size=UDim2.fromScale(1,1), color=Color3.new(1,1,1), z=102 })
-	rnd(wg, 6)
+	rnd(wg, 4)
 	inst("UIGradient", { Color=ColorSequence.new(Color3.new(1,1,1)), Transparency=NumberSequence.new{ NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(1,1) } }, wg)
-
+	
 	local bg = frame(svMap, { name="BlackGrad", size=UDim2.fromScale(1,1), color=Color3.new(0,0,0), z=103 })
-	rnd(bg, 6)
+	rnd(bg, 4)
 	inst("UIGradient", { Color=ColorSequence.new(Color3.new(0,0,0)), Rotation=90, Transparency=NumberSequence.new{ NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(1,0) } }, bg)
 
 	local svCursor = frame(bg, {
@@ -1167,7 +1152,7 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		Name="HueTrack", BackgroundColor3=Color3.new(1,1,1), Text="",
 		Size=UDim2.new(1, -16, 0, 14), Position=UDim2.new(0, 8, 0, 116), ZIndex=101, AutoButtonColor=false,
 	}, panel)
-	rnd(hueTrack, 7)
+	rnd(hueTrack, 4)
 	
 	local rainbow = ColorSequence.new{
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255,255,0)),
@@ -1230,7 +1215,6 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		open = false
 		panel.Visible = false
 		parent.ZIndex = 7
-		if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 7 end
 		setScrollPadding(0)
 	end
 
@@ -1239,7 +1223,6 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 		open = not open
 		if open then
 			parent.ZIndex = 110
-			if parent.Parent and parent.Parent:IsA("GuiObject") then parent.Parent.ZIndex = 110 end
 			panel.Visible = true
 			setScrollPadding(160)
 		else
@@ -1248,14 +1231,14 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 	end)
 	
 	local hexBox = inst("TextBox", {
-		BackgroundColor3 = K.bg, BorderSizePixel=0, TextColor3=K.text,
+		BackgroundColor3 = K.surface, BorderSizePixel=0, TextColor3=K.text,
 		Font = Enum.Font.Code, TextSize=11, Size=UDim2.new(1,-16,0,20),
 		Position=UDim2.new(0,8,0,134), ZIndex=101, ClearTextOnFocus=false
 	}, panel)
-	rnd(hexBox, 6)
+	rnd(hexBox, 4)
 	brd(hexBox, "border", 1)
 	registerThemeUpdater(function()
-		hexBox.BackgroundColor3 = K.bg
+		hexBox.BackgroundColor3 = K.surface
 		hexBox.TextColor3 = K.text
 	end, hexBox)
 	
@@ -1280,39 +1263,28 @@ local function makeColorPicker(parent, defaultColor, onOpenStart)
 end
 
 
-local OceanUI = {}
-OceanUI.Themes = THEMES
+local VantixUI = {}
+VantixUI.Themes = THEMES
 
 -- CreateNewWindow panels live alongside the main window and close with it
-local OceanPanels = {}
-local function closeOceanPanels()
-	for _, p in ipairs(OceanPanels) do pcall(function() p:Destroy() end) end
-	table.clear(OceanPanels)
+local VantixPanels = {}
+local function closeVantixPanels()
+	for _, p in ipairs(VantixPanels) do pcall(function() p:Destroy() end) end
+	table.clear(VantixPanels)
 end
 
-function OceanUI:SetTheme(name)
+function VantixUI:SetTheme(name)
 	setTheme(name)
 end
 
-function OceanUI:GetTheme()
+function VantixUI:GetTheme()
 	return activeThemeName
 end
 
-function OceanUI:SetAccentColor(color)
-	setAccentColor(color)
-end
-
-function OceanUI:GetAccentColor()
-	return K.white
-end
-
-function OceanUI:CreateWindow(config)
+function VantixUI:CreateWindow(config)
 	config = config or {}
 	if config.Theme and THEMES[config.Theme] then
 		setTheme(config.Theme)
-	end
-	if config.AccentColor then
-		setAccentColor(config.AccentColor)
 	end
 	local allDropdownClosers = {}
 	local MOBILE = isMobile()
@@ -1327,40 +1299,17 @@ function OceanUI:CreateWindow(config)
 	end
 	local SIDE_W = math.clamp(math.floor(WIN_W * 0.25), 90, 170)
 	local TITLE  = config.Title or "Vantix"
-	local LOGO   = (config.Logo or config.LogoID) and tostring(config.Logo or config.LogoID) or LOGO_ASSET
 
-	local existing = CoreGui:FindFirstChild("OceanUI")
+	local existing = CoreGui:FindFirstChild("VantixUI")
 	if existing then existing:Destroy() end
-	closeOceanPanels()
+	closeVantixPanels()
 
 
 	local sg = inst("ScreenGui",{
-		Name="OceanUI", ResetOnSpawn=false,
+		Name="VantixUI", ResetOnSpawn=false,
 		IgnoreGuiInset=true, ZIndexBehavior=Enum.ZIndexBehavior.Sibling,
 		DisplayOrder=999,
 	}, CoreGui)
-
-	
-	local cursorSink = inst("TextButton",{
-		Name="CursorSink", Modal=true, Text="", AutoButtonColor=false,
-		BackgroundTransparency=1, Size=UDim2.fromOffset(1,1),
-		Position=UDim2.fromOffset(-10,-10), Visible=false,
-	}, sg)
-
-	
-	pcall(function() RunService:UnbindFromRenderStep("OceanUICursorFree") end)
-	RunService:BindToRenderStep("OceanUICursorFree", Enum.RenderPriority.Camera.Value + 1, function()
-		if cursorSink.Visible then
-			local isFirstPerson = (camera.CFrame.Position - camera.Focus.Position).Magnitude < 1
-			if isFirstPerson then
-				UIS.MouseBehavior = Enum.MouseBehavior.Default
-				UIS.MouseIconEnabled = true
-			end
-		end
-	end)
-	sg.Destroying:Connect(function()
-		pcall(function() RunService:UnbindFromRenderStep("OceanUICursorFree") end)
-	end)
 
 	local win = frame(sg,{
 		name="Win", colorKey="bg",
@@ -1484,34 +1433,47 @@ function OceanUI:CreateWindow(config)
 
 	local logoWrap = frame(loadLayer,{
 		name="LW", colorKey="bg", trans=1,
-		size=UDim2.new(0,140,0,105),
+		size=UDim2.new(0,260,0,80),
 		pos=UDim2.new(0.5,0,0.5,-12), anchor=Vector2.new(0.5,0.5), z=31,
 	})
+	inst("UIListLayout",{
+		FillDirection=Enum.FillDirection.Horizontal,
+		HorizontalAlignment=Enum.HorizontalAlignment.Center,
+		VerticalAlignment=Enum.VerticalAlignment.Center,
+		Padding=UDim.new(0,-5),
+	},logoWrap)
 
-	local logoImg = inst("ImageLabel",{
-		Name="LogoMark", BackgroundTransparency=1,
-		Image=assetImage(LOGO), ImageTransparency=1,
-		ImageColor3=K.logoTop, ScaleType=Enum.ScaleType.Fit,
-		Size=UDim2.fromScale(0.8,0.8),
-		Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5),
-		ZIndex=32,
-	}, logoWrap)
-	local logoScale = inst("UIScale", {Scale=0.72}, logoImg)
-	local logoGrad = inst("UIGradient",{Rotation=90,Color=ColorSequence.new({
+	local CHARS = {
+		{"}",74,-4,44}, {"<",67,0,38}, {"(",67,-5,34},
+		{"(",67,-5,34}, {"°",54,-1,30}, {">",67,0,38},
+	}
+	local logoGrad = ColorSequence.new({
 		ColorSequenceKeypoint.new(0,   K.logoTop),
 		ColorSequenceKeypoint.new(0.45,K.logoMid),
 		ColorSequenceKeypoint.new(1,   K.logoBot),
-	})}, logoImg)
-	registerThemeUpdater(function()
-		logoGrad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0,   K.logoTop),
-			ColorSequenceKeypoint.new(0.45,K.logoMid),
-			ColorSequenceKeypoint.new(1,   K.logoBot),
+	})
+	local charDefs={}
+	for i,d in ipairs(CHARS) do
+		local ch,fs,yo,w=d[1],d[2],d[3],d[4]
+		local cf=frame(logoWrap,{name="cf"..i,colorKey="bg",trans=1,size=UDim2.new(0,w,0,80),z=32})
+		local cl=lbl(cf,{
+			text=ch,font=Enum.Font.Code,size=fs,colorKey="logoTop",trans=1,
+			sz=UDim2.new(0,100,0,80),pos=UDim2.new(0.5,0,0.5,yo),anchor=Vector2.new(0.5,0.5),
+			xa=Enum.TextXAlignment.Center,ya=Enum.TextYAlignment.Center,z=32,
 		})
-	end, logoGrad)
+		local grad = inst("UIGradient",{Rotation=90,Color=logoGrad},cl)
+		registerThemeUpdater(function()
+			grad.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0,   K.logoTop),
+				ColorSequenceKeypoint.new(0.45,K.logoMid),
+				ColorSequenceKeypoint.new(1,   K.logoBot),
+			})
+		end, grad)
+		charDefs[i]={label=cl,yo=yo}
+	end
 
 	local loadSub=lbl(loadLayer,{
-		text=string.upper(TITLE),font=Enum.Font.Gotham,
+		text="OCEAN  DEVELOPMENT",font=Enum.Font.Gotham,
 		size=12,colorKey="muted",trans=1,
 		sz=UDim2.new(0,260,0,18),pos=UDim2.new(0.5,0,0.5,36),anchor=Vector2.new(0.5,0),
 		xa=Enum.TextXAlignment.Center,z=32,
@@ -1545,7 +1507,6 @@ function OceanUI:CreateWindow(config)
 		text=TITLE, font=Enum.Font.GothamBold, size=16, colorKey="white",
 		sz=UDim2.new(0,200,1,0), pos=UDim2.new(0,16,0,0), z=6,
 	})
-	titleLbl.TextTruncate = Enum.TextTruncate.AtEnd
 
 	local tagContainer = frame(titlebar,{
 		name="TagContainer", colorKey="bg", trans=1,
@@ -1605,7 +1566,7 @@ function OceanUI:CreateWindow(config)
 	closeBtn.MouseButton1Click:Connect(function()
 		if win:GetAttribute("Closing") then return end
 		win:SetAttribute("Closing", true)
-		closeOceanPanels()
+		closeVantixPanels()
 
 		local winScale = Instance.new("UIScale")
 		winScale.Scale = 1
@@ -1668,15 +1629,11 @@ function OceanUI:CreateWindow(config)
 	end
 
 	lbl(clickArea, {
-		text="Open Ocean", font=Enum.Font.GothamMedium, size=12, colorKey="white",
+		text="Open Vantix", font=Enum.Font.GothamMedium, size=12, colorKey="white",
 		sz=UDim2.new(1,-34,1,0), pos=UDim2.new(0, (lucide and 33 or 10),0,0), xa=Enum.TextXAlignment.Left, z=103
 	})
 
-	-- the ScreenGui ignores the topbar inset, so a scale-based Y can render above the
-	-- visible area on setups with UI scaling; offset past the inset so the pill stays on-screen
-	local topInset = 36
-	pcall(function() topInset = game:GetService("GuiService"):GetGuiInset().Y end)
-	local savedMinPos = UDim2.new(0.5, 0, 0, topInset + 70)
+	local savedMinPos = UDim2.new(0.5, 0, 0.05, 0)
 	do
 		local d_dragging = false
 		local ds, ws
@@ -1698,14 +1655,8 @@ function OceanUI:CreateWindow(config)
 			end
 		end)
 	end
-	local minimized = false
-	local animating = false
-
-	local function doMinimize()
-		if minimized or animating then return end
-		animating = true
-		minimized = true
-		cursorSink.Visible = false
+	
+	minBtn.MouseButton1Click:Connect(function()
 		for _, closer in ipairs(allDropdownClosers) do pcall(closer) end
 		resizeBtn.Visible = false
 		resizeHandle.Visible = false
@@ -1714,64 +1665,37 @@ function OceanUI:CreateWindow(config)
 		local curSize = win.Size
 		win:SetAttribute("RestoreSizeX", curSize.X.Offset)
 		win:SetAttribute("RestoreSizeY", curSize.Y.Offset)
-		
-		minOverlay.Visible = true
-		minOverlay.ZIndex = 1000
-		minOverlay.BackgroundTransparency = 0
-		minOverlay.Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)
-		tw(minOverlay, {Position = savedMinPos}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
-
-		local t = tw(win, {Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-		t.Completed:Connect(function()
+		-- tween to height 0
+		tw(win,{Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
+		task.delay(0.25, function()
 			win.Visible = false
+			minOverlay.Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)
+			minOverlay.Visible = true
+			tw(minOverlay, {Position = savedMinPos}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
 			win.ClipsDescendants = false
-			animating = false
 		end)
-		t:Play()
-	end
+	end)
 
-	local function doRestore()
-		if not minimized or animating then return end
-		animating = true
-
-		local tp = tw(minOverlay, {Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-		tp.Completed:Connect(function()
+	clickArea.MouseButton1Click:Connect(function()
+		tw(minOverlay, {Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In):Play()
+		task.delay(0.2, function()
 			minOverlay.Visible = false
 			win.Visible = true
-			cursorSink.Visible = true
 			resizeBtn.Visible = true
 			resizeHandle.Visible = true
 			win.ClipsDescendants = true
 			local rW = win:GetAttribute("RestoreSizeX") or WIN_W
 			local rH = win:GetAttribute("RestoreSizeY") or WIN_H
-			if config.Size and not MOBILE then
+			if config.Size and not MOBILE then 
 				rW = win:GetAttribute("RestoreSizeX") or math.clamp(config.Size[1], 200, vp.X - 20)
 				rH = win:GetAttribute("RestoreSizeY") or math.clamp(config.Size[2], 200, vp.Y - 40)
 			end
-			local tr = tw(win,{Size=UDim2.new(0, rW, 0, rH), BackgroundTransparency=0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			tr.Completed:Connect(function()
+			tw(win,{Size=UDim2.new(0, rW, 0, rH), BackgroundTransparency=0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+			task.delay(0.3, function()
 				win.ClipsDescendants = false
 				tw(outerGlow, {BackgroundTransparency=0.93}, 0.15):Play()
-				minimized = false
-				animating = false
 			end)
-			tr:Play()
 		end)
-		tp:Play()
-	end
-
-	minBtn.MouseButton1Click:Connect(doMinimize)
-	clickArea.MouseButton1Click:Connect(doRestore)
-
-
-	local toggleKey = Enum.KeyCode.RightShift
-	local function setToggleKey(key)
-		toggleKey = key
-	end
-	UIS.InputBegan:Connect(function(inp)
-		if toggleKey and inp.KeyCode == toggleKey and not UIS:GetFocusedTextBox() then
-			if minimized then doRestore() else doMinimize() end
-		end
 	end)
 
 	-- Drag
@@ -1899,13 +1823,12 @@ function OceanUI:CreateWindow(config)
 		rnd(avatarImg,99)
 
 		local txtX = AVA + 16
-		local nameLbl = lbl(profileSection,{
+		lbl(profileSection,{
 			text=player.DisplayName,
 			font=Enum.Font.GothamBold, size=15, colorKey="text",
 			sz=UDim2.new(1,-txtX-4,0,18),
 			pos=UDim2.new(0,txtX,0.5,-15), z=7,
 		})
-		nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
 
 		local execLbl = lbl(profileSection,{
 			text="",
@@ -1913,7 +1836,6 @@ function OceanUI:CreateWindow(config)
 			sz=UDim2.new(1,-txtX-4,0,15),
 			pos=UDim2.new(0,txtX,0.5,5), z=7,
 		})
-		execLbl.TextTruncate = Enum.TextTruncate.AtEnd
 
 		task.spawn(function()
 			local ok, thumb = pcall(function()
@@ -1946,35 +1868,49 @@ function OceanUI:CreateWindow(config)
 	rnd(contentArea, 10)
 
 	do
-		local BG_H = MOBILE and 150 or 220
-		local BG_W = MOBILE and 470 or 680
+		local BG_H = MOBILE and 70 or 90
 		local bgGrad = ColorSequence.new({
 			ColorSequenceKeypoint.new(0,   K.logoTop),
 			ColorSequenceKeypoint.new(0.45,K.logoMid),
 			ColorSequenceKeypoint.new(1,   K.logoBot),
 		})
-		-- same asset mark as the splash logo, blown up and faded as a background watermark
+		local BG_CHARS = {
+			{"}",  96,   0,  -5, 54},
+			{"<",  86,  56,   0, 48},
+			{"(",  86, 106,  -1, 42},
+			{"(",  86, 150,  -1, 42},
+			{"°",  66, 194,  -1, 38},
+			{">",  86, 234,   6, 48},
+		}
 		local bgWrap = frame(contentArea,{
 			name="BgLogo", colorKey="bg", trans=1,
-			size=UDim2.new(0,BG_W,0,BG_H),
+			size=UDim2.new(0,320,0,BG_H),
 			pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=1,
 		})
-		local bgImg = inst("ImageLabel",{
-			Name="BgMark", BackgroundTransparency=1,
-			Image=assetImage(LOGO), ImageColor3=K.white, ImageTransparency=0.88,
-			ScaleType=Enum.ScaleType.Fit,
-			Size=UDim2.fromScale(1,1), Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5),
-			ZIndex=1,
-		}, bgWrap)
-		local grad = inst("UIGradient",{Rotation=90,Color=bgGrad},bgImg)
-		registerThemeUpdater(function()
-			bgImg.ImageColor3 = K.white
-			grad.Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0,   K.logoTop),
-				ColorSequenceKeypoint.new(0.45,K.logoMid),
-				ColorSequenceKeypoint.new(1,   K.logoBot),
-			})
-		end, bgImg)
+		bgWrap.Rotation = -35
+		for _,d in ipairs(BG_CHARS) do
+			local ch,fs,xo,yo,w = d[1],d[2],d[3],d[4],d[5]
+			local cl = inst("TextLabel",{
+				BackgroundTransparency=1,
+				Font=Enum.Font.Code, Text=ch,
+				TextColor3=K.white,
+				TextSize=fs, TextTransparency=0.88,
+				TextXAlignment=Enum.TextXAlignment.Center,
+				TextYAlignment=Enum.TextYAlignment.Center,
+				Size=UDim2.new(0,w,0,BG_H),
+				Position=UDim2.new(0,xo,0,yo),
+				ZIndex=1,
+			}, bgWrap)
+			local grad = inst("UIGradient",{Rotation=90,Color=bgGrad},cl)
+			registerThemeUpdater(function()
+				cl.TextColor3 = K.white
+				grad.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0,   K.logoTop),
+					ColorSequenceKeypoint.new(0.45,K.logoMid),
+					ColorSequenceKeypoint.new(1,   K.logoBot),
+				})
+			end, cl)
+		end
 
 		local bgScale = inst("UIScale",{Scale=1}, bgWrap)
 		local _baseContentW = WIN_W - contentX
@@ -1987,78 +1923,38 @@ function OceanUI:CreateWindow(config)
 	local tabCount = 0
 	local tagCount = 0
 
-	local tooltipBg = frame(sg, {
-		name="TooltipBg", colorKey="raised", z=179,
-		size=UDim2.new(0,0,0,26),
-	})
-	tooltipBg.Visible = false
-	tooltipBg.AutomaticSize = Enum.AutomaticSize.X
-	rnd(tooltipBg, 5)
-	brd(tooltipBg, "borderHi", 1)
-
-	local tooltipLbl = lbl(tooltipBg, {
-		name="Tooltip", text="", font=Enum.Font.GothamMedium, size=12,
-		colorKey="text", sz=UDim2.new(1,0,1,0),
-		wrap=false, xa=Enum.TextXAlignment.Left, ya=Enum.TextYAlignment.Center,
-		z=180,
-	})
-	pad(tooltipLbl, 8, 8, 0, 0)
-
-	local function tooltipPos(x, y)
-		local vpX, vpY = camera.ViewportSize.X, camera.ViewportSize.Y
-		local w = tooltipBg.AbsoluteSize.X
-		local px = math.clamp(x + 16, 4, vpX - w - 4)
-		local py = math.clamp(y + 20, 4, vpY - 30)
-		tooltipBg.Position = UDim2.fromOffset(px, py)
-	end
-	local function showTooltip(text, x, y)
-		if not text or text == "" then return end
-		tooltipLbl.Text = text
-		tooltipBg.Visible = true
-		tooltipPos(x, y)
-	end
-	local function moveTooltip(x, y)
-		if tooltipBg.Visible then tooltipPos(x, y) end
-	end
-	local function hideTooltip()
-		tooltipBg.Visible = false
-	end
-
 	function Window:CreateTag(text, bgColor, textColor, iconName)
 		tagCount = tagCount + 1
-		local accent = bgColor
 		local tWrap = frame(tagContainer,{
-			name="Tag_"..text, colorKey="raised",
-			size=UDim2.new(0,0,0,22), z=6,
+			name="Tag_"..text, color=bgColor or Color3.fromRGB(60, 120, 210),
+			size=UDim2.new(0,0,0,20), z=6,
 		})
 		tWrap.AutomaticSize = Enum.AutomaticSize.X
 		tWrap.LayoutOrder = tagCount
-		rnd(tWrap, 6)
-		brd(tWrap, accent and shade(accent, 0.85) or "border", 1)
-
+		rnd(tWrap, 4)
 		inst("UIListLayout",{
 			FillDirection=Enum.FillDirection.Horizontal, SortOrder=Enum.SortOrder.LayoutOrder,
-			VerticalAlignment=Enum.VerticalAlignment.Center, Padding=UDim.new(0,4),
+			VerticalAlignment=Enum.VerticalAlignment.Center, Padding=UDim.new(0,3),
 		}, tWrap)
 		inst("UIPadding",{
-			PaddingLeft=UDim.new(0,7), PaddingRight=UDim.new(0,7)
+			PaddingLeft=UDim.new(0,6), PaddingRight=UDim.new(0,6)
 		}, tWrap)
 
 		if iconName and lucide then
 			local ic = img(tWrap,{
-				name="Icon", img=getLucide(iconName, 14),
-				color=accent, colorKey=not accent and "sub" or nil,
+				name="Icon", img=getLucide(iconName, 12),
+				color=textColor, colorKey=not textColor and "white" or nil,
 				sz=UDim2.new(0,13,0,13), z=7,
 			})
 			ic.LayoutOrder = 0
 		end
 
 		local tLbl = lbl(tWrap,{
-			text=text, font=Enum.Font.GothamMedium, size=11,
-			color=textColor, colorKey=not textColor and "text" or nil,
-			sz=UDim2.new(0,0,0,0), z=7, xa=Enum.TextXAlignment.Center, ya=Enum.TextYAlignment.Center,
+			text=text, font=Enum.Font.GothamBold, size=11,
+			color=textColor, colorKey=not textColor and "white" or nil,
+			sz=UDim2.new(0,0,1,0), z=7, xa=Enum.TextXAlignment.Center,
 		})
-		tLbl.AutomaticSize = Enum.AutomaticSize.XY
+		tLbl.AutomaticSize = Enum.AutomaticSize.X
 		tLbl.LayoutOrder = 1
 	end
 
@@ -2101,7 +1997,7 @@ function OceanUI:CreateWindow(config)
 		inst("UIListLayout",{
 			FillDirection=Enum.FillDirection.Vertical,
 			SortOrder=Enum.SortOrder.LayoutOrder,
-			Padding=UDim.new(0,4),
+			Padding=UDim.new(0,0),
 		},scroll)
 
 		if sidebar then
@@ -2122,7 +2018,6 @@ function OceanUI:CreateWindow(config)
 				text=tabName,font=Enum.Font.GothamMedium,size=SIDE_W < 140 and 12 or 15,colorKey="sub",
 				sz=UDim2.new(1,0,1,0),pos=UDim2.new(0,(iconName and lucide) and (SIDE_W < 140 and 28 or 38) or (SIDE_W < 140 and 8 or 16),0,0),z=7,
 			})
-			nl.TextTruncate = Enum.TextTruncate.AtEnd
 
 			local iconImg
 			if iconName and lucide then
@@ -2149,72 +2044,31 @@ function OceanUI:CreateWindow(config)
 
 		local Tab = {}
 		local rowCounter = 0
-		local currentGroup = nil
-		local groupRowCounter = 0
 
-		local function getGroup()
-			local isFirst = not currentGroup
-			if isFirst then
-				rowCounter = rowCounter + 1
-				groupRowCounter = 0
-				currentGroup = frame(scroll, {
-					name="Group_"..rowCounter, colorKey="raised",
-					size=UDim2.new(1,0,0,0), z=7,
-				})
-				currentGroup.LayoutOrder = rowCounter
-				currentGroup.AutomaticSize = Enum.AutomaticSize.Y
-				rnd(currentGroup, 8)
-				local groupStroke = brd(currentGroup, "border", 1)
-				groupStroke.Transparency = 0.5
-				inst("UIListLayout",{
-					FillDirection=Enum.FillDirection.Vertical,
-					SortOrder=Enum.SortOrder.LayoutOrder,
-					Padding=UDim.new(0,0),
-				}, currentGroup)
-			end
-			groupRowCounter = groupRowCounter + 1
-			return currentGroup, isFirst, groupRowCounter
-		end
-
-		local function endGroup()
-			currentGroup = nil
-		end
-
-		local function makeRow(title, subtitle, iconName, risky, tooltipText)
-			local group, isFirst, orderInGroup = getGroup()
+		local function makeRow(title, subtitle, iconName)
+			rowCounter = rowCounter + 1
 			local rowH = subtitle and 54 or 42
-			local r = frame(group,{
+			local r = frame(scroll,{
 				name="Row_"..title, colorKey="bg", trans=1,
 				size=UDim2.new(1,0,0,rowH), z=7,
 			})
-			r.LayoutOrder = orderInGroup
+			r.LayoutOrder = rowCounter
 
-			if not isFirst then
-				frame(r,{
-					name="Div", colorKey="border", trans=0.5,
-					size=UDim2.new(1,0,0,1), pos=UDim2.new(0,0,0,0), z=8,
-				})
-			end
+			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
+			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
 
-			if tooltipText and tooltipText ~= "" then
-				r.MouseEnter:Connect(function(x, y) showTooltip(tooltipText, x, y) end)
-				r.MouseMoved:Connect(function(x, y) moveTooltip(x, y) end)
-				r.MouseLeave:Connect(hideTooltip)
-			end
-
-			local textOffset = (iconName and lucide) and (ROW_PAD+28) or ROW_PAD
+			local textOffset = (iconName and lucide) and 30 or 0
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
-					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,ROW_PAD,0.5,0), anchor=Vector2.new(0,0.5), z=8,
+					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=8,
 				})
 			end
 
 			lbl(r,{
-				text=title, font=Enum.Font.GothamMedium, size=14,
-				color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
+				text=title, font=Enum.Font.GothamMedium, size=14, colorKey="text",
 				sz=UDim2.new(0.6,0,0,20),
 				pos=UDim2.new(0,textOffset,0, subtitle and 8 or 11), z=8,
 			})
@@ -2225,44 +2079,45 @@ function OceanUI:CreateWindow(config)
 				})
 			end
 
+			frame(r,{
+				name="Div", colorKey="border",
+				size=UDim2.new(1,0,0,1),
+				pos=UDim2.new(0,0,1,-1), z=8,
+			})
+
 			return r
 		end
 
-		local function makeSliderRow(title, iconName, risky, tooltipText)
-			local group, isFirst, orderInGroup = getGroup()
-			local r = frame(group,{
+		local function makeSliderRow(title, iconName)
+			rowCounter = rowCounter + 1
+			local r = frame(scroll,{
 				name="SlRow_"..title, colorKey="bg", trans=1,
 				size=UDim2.new(1,0,0,60), z=7,
 			})
-			r.LayoutOrder = orderInGroup
+			r.LayoutOrder = rowCounter
 
-			if not isFirst then
-				frame(r,{
-					name="Div", colorKey="border", trans=0.5,
-					size=UDim2.new(1,0,0,1), pos=UDim2.new(0,0,0,0), z=8,
-				})
-			end
+			local hover = frame(r,{ name="Hover", colorKey="surface", trans=1, size=UDim2.new(1,0,1,-1), z=6 })
+			r.MouseEnter:Connect(function() tw(hover,{BackgroundTransparency=0.5},0.12):Play() end)
+			r.MouseLeave:Connect(function() tw(hover,{BackgroundTransparency=1},0.12):Play() end)
 
-			if tooltipText and tooltipText ~= "" then
-				r.MouseEnter:Connect(function(x, y) showTooltip(tooltipText, x, y) end)
-				r.MouseMoved:Connect(function(x, y) moveTooltip(x, y) end)
-				r.MouseLeave:Connect(hideTooltip)
-			end
-
-			local textOffset = (iconName and lucide) and (ROW_PAD+28) or ROW_PAD
+			local textOffset = (iconName and lucide) and 30 or 0
 
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
-					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,ROW_PAD,0,10), z=8,
+					colorKey="text", sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,0,0,10), z=8,
 				})
 			end
 
 			lbl(r,{
-				text=title, font=Enum.Font.GothamMedium, size=14,
-				color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
+				text=title, font=Enum.Font.GothamMedium, size=14, colorKey="text",
 				sz=UDim2.new(1,0,0,20), pos=UDim2.new(0,textOffset,0,10), z=8,
+			})
+
+			frame(r,{
+				name="Div", colorKey="border",
+				size=UDim2.new(1,0,0,1),
+				pos=UDim2.new(0,0,1,-1), z=8,
 			})
 
 			return r
@@ -2270,9 +2125,9 @@ function OceanUI:CreateWindow(config)
 
 		function Tab:AddToggle(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Toggle", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Toggle", opts.Subtitle, opts.Icon)
 			local tog = makeToggle(r, opts.Default or false)
-			tog.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
+			tog.frame.Position   = UDim2.new(1,0,0.5,0)
 			tog.frame.AnchorPoint = Vector2.new(1,0.5)
 			tog.frame.ZIndex = 9
 
@@ -2296,10 +2151,9 @@ function OceanUI:CreateWindow(config)
 
 		function Tab:AddSlider(opts)
 			opts = opts or {}
-			local r = makeSliderRow(opts.Title or "Slider", opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeSliderRow(opts.Title or "Slider", opts.Icon)
 			local sl = makeSlider(r, opts.Min or 0, opts.Max or 100, opts.Default or 0)
-			sl.frame.Position = UDim2.new(0,ROW_PAD,0,30)
-			sl.frame.Size     = UDim2.new(1,-ROW_PAD*2,sl.frame.Size.Y.Scale,sl.frame.Size.Y.Offset)
+			sl.frame.Position = UDim2.new(0,0,0,30)
 			sl.frame.ZIndex   = 8
 
 			local initVal = opts.Default or opts.Min or 0
@@ -2307,7 +2161,7 @@ function OceanUI:CreateWindow(config)
 				text=tostring(math.round(initVal)),
 				font=Enum.Font.GothamBold, size=13, colorKey="white",
 				sz=UDim2.new(0,55,0,20),
-				pos=UDim2.new(1,-ROW_PAD,0,8), anchor=Vector2.new(1,0),
+				pos=UDim2.new(1,0,0,8), anchor=Vector2.new(1,0),
 				xa=Enum.TextXAlignment.Right, z=9,
 			})
 			sl.changed:Connect(function(v)
@@ -2331,7 +2185,7 @@ function OceanUI:CreateWindow(config)
 
 		function Tab:AddButton(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Button", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Button", opts.Subtitle, opts.Icon)
 			
 			local btnText = opts.ButtonText or opts.Text or "Execute"
 			local bW = 70
@@ -2339,25 +2193,25 @@ function OceanUI:CreateWindow(config)
 
 			local ab = btn(r,{
 				text=btnText, font=Enum.Font.GothamMedium, size=12,
-				colorKey="bg", tcKey="white",
-				sz=UDim2.new(0,bW,0,28), pos=UDim2.new(1,-ROW_PAD,0.5,0), anchor=Vector2.new(1,0.5), z=9,
+				colorKey="raised", tcKey="white",
+				sz=UDim2.new(0,bW,0,28), pos=UDim2.new(1,0,0.5,0), anchor=Vector2.new(1,0.5), z=9,
 			})
-			rnd(ab,6)
+			rnd(ab,5)
 			brd(ab,"border",1)
 
-			ab.MouseEnter:Connect(function()
+			ab.MouseEnter:Connect(function() 
 				ab:SetAttribute("Hovered", true)
-				tw(ab,{BackgroundColor3=K.border},0.1):Play()
+				tw(ab,{BackgroundColor3=K.border},0.1):Play() 
 			end)
-			ab.MouseLeave:Connect(function()
+			ab.MouseLeave:Connect(function() 
 				ab:SetAttribute("Hovered", false)
-				tw(ab,{BackgroundColor3=K.bg},0.1):Play()
+				tw(ab,{BackgroundColor3=K.raised},0.1):Play() 
 			end)
 			ab.MouseButton1Click:Connect(function()
 				if opts.Callback then pcall(opts.Callback) end
 				tw(ab,{BackgroundColor3=K.white,TextColor3=K.black},0.08):Play()
-				task.delay(0.16,function()
-					tw(ab,{BackgroundColor3=K.bg,TextColor3=K.white},0.12):Play()
+				task.delay(0.16,function() 
+					tw(ab,{BackgroundColor3=K.raised,TextColor3=K.white},0.12):Play() 
 				end)
 			end)
 
@@ -2365,7 +2219,6 @@ function OceanUI:CreateWindow(config)
 		end
 
 		function Tab:AddLabel(text, iconName)
-			endGroup()
 			rowCounter = rowCounter + 1
 			local r = frame(scroll,{
 				name="LblRow", colorKey="bg", trans=1,
@@ -2388,7 +2241,7 @@ function OceanUI:CreateWindow(config)
 			})
 
 			frame(r,{
-				name="Div", colorKey="border", trans=0.45,
+				name="Div", colorKey="border",
 				size=UDim2.new(1,0,0,1),
 				pos=UDim2.new(0,0,1,-1), z=8,
 			})
@@ -2401,7 +2254,7 @@ function OceanUI:CreateWindow(config)
 
 		function Tab:AddDropdown(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Dropdown", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Dropdown", opts.Subtitle, opts.Icon)
 
 			local onOpenStart = function()
 				for _, closer in ipairs(allDropdownClosers) do pcall(closer) end
@@ -2409,7 +2262,7 @@ function OceanUI:CreateWindow(config)
 
 			local optionsList = opts.Options or opts.List or {"Option 1"}
 			local dd = makeDropdown(r, optionsList, opts.Default or 1, onOpenStart)
-			dd.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
+			dd.frame.Position   = UDim2.new(1,0,0.5,0)
 			dd.frame.AnchorPoint = Vector2.new(1,0.5)
 			dd.frame.ZIndex = 10
 
@@ -2430,7 +2283,7 @@ function OceanUI:CreateWindow(config)
 
 		function Tab:AddMultiDropdown(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Multi Dropdown", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Multi Dropdown", opts.Subtitle, opts.Icon)
 
 			local onOpenStart = function()
 				for _, closer in ipairs(allDropdownClosers) do pcall(closer) end
@@ -2438,7 +2291,7 @@ function OceanUI:CreateWindow(config)
 
 			local optionsList = opts.Options or opts.List or {"Option 1"}
 			local dd = makeMultiDropdown(r, optionsList, opts.Default or {}, onOpenStart)
-			dd.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
+			dd.frame.Position   = UDim2.new(1,0,0.5,0)
 			dd.frame.AnchorPoint = Vector2.new(1,0.5)
 			dd.frame.ZIndex = 10
 
@@ -2459,10 +2312,10 @@ function OceanUI:CreateWindow(config)
 
 		function Tab:AddTextBox(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Input", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Input", opts.Subtitle, opts.Icon)
 
 			local tb = makeTextBox(r, opts.Placeholder, opts.Default)
-			tb.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
+			tb.frame.Position   = UDim2.new(1,0,0.5,0)
 			tb.frame.AnchorPoint = Vector2.new(1,0.5)
 			tb.frame.ZIndex = 10
 
@@ -2479,7 +2332,7 @@ function OceanUI:CreateWindow(config)
 
 		function Tab:AddColorPicker(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Color Picker", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Color Picker", opts.Subtitle, opts.Icon)
 			
 			local defaultColor = opts.Default or Color3.fromRGB(255,255,255)
 			if type(opts.Default) == "string" then
@@ -2491,7 +2344,7 @@ function OceanUI:CreateWindow(config)
 			end
 
 			local cp = makeColorPicker(r, defaultColor, onOpenStart)
-			cp.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
+			cp.frame.Position   = UDim2.new(1,0,0.5,0)
 			cp.frame.AnchorPoint = Vector2.new(1,0.5)
 			cp.frame.ZIndex = 10
 
@@ -2511,17 +2364,17 @@ function OceanUI:CreateWindow(config)
 		function Tab:AddKeybind(opts)
 			opts = opts or {}
 			local currentKey = opts.Default or Enum.KeyCode.Unknown
-			local r = makeRow(opts.Title or "Keybind", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Keybind", opts.Subtitle, opts.Icon)
 			local changedEvent = Instance.new("BindableEvent")
 
 			local keyBtn = btn(r,{
 				text = currentKey == Enum.KeyCode.Unknown and "None" or currentKey.Name,
 				font=Enum.Font.GothamMedium, size=13,
-				colorKey="bg", tcKey="sub",
+				colorKey="raised", tcKey="sub",
 				sz=UDim2.new(0,90,0,28),
-				pos=UDim2.new(1,-ROW_PAD,0.5,0), anchor=Vector2.new(1,0.5), z=10,
+				pos=UDim2.new(1,0,0.5,0), anchor=Vector2.new(1,0.5), z=10,
 			})
-			rnd(keyBtn,6)
+			rnd(keyBtn,5)
 			brd(keyBtn,"border",1)
 
 			local listening = false
@@ -2549,7 +2402,7 @@ function OceanUI:CreateWindow(config)
 					end
 					listening = false
 					keyBtn:SetAttribute("Hovered", false)
-					tw(keyBtn,{BackgroundColor3=K.bg},0.1):Play()
+					tw(keyBtn,{BackgroundColor3=K.raised},0.1):Play()
 					changedEvent:Fire(currentKey)
 				end
 			end)
@@ -2566,41 +2419,12 @@ function OceanUI:CreateWindow(config)
 		end
 
 		function Tab:AddSeparator()
-			endGroup()
 			rowCounter = rowCounter + 1
 			local r = frame(scroll,{
 				name="Sep", colorKey="bg", trans=1,
 				size=UDim2.new(1,0,0,12), z=7,
 			})
 			r.LayoutOrder = rowCounter
-		end
-
-		-- dropdown bound to the window's minimize hotkey, so users can rebind it in-menu
-		function Tab:AddToggleKey(opts)
-			opts = opts or {}
-			local keys = opts.Keys or {
-				"RightShift", "LeftShift", "RightControl", "LeftControl", "RightAlt", "LeftAlt",
-				"Insert", "Delete", "Home", "End", "PageUp", "PageDown",
-				"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-			}
-			local current = (toggleKey and toggleKey.Name) or keys[1]
-			local present = false
-			for _, k in ipairs(keys) do if k == current then present = true break end end
-			if not present then table.insert(keys, 1, current) end
-			return self:AddDropdown({
-				Title    = opts.Title or "UI Toggle Key",
-				Subtitle = opts.Subtitle,
-				Icon     = opts.Icon or "keyboard",
-				Options  = keys,
-				Default  = current,
-				Callback = function(sel)
-					local ok, key = pcall(function() return Enum.KeyCode[sel] end)
-					if ok and key then
-						setToggleKey(key)
-						if opts.Callback then pcall(opts.Callback, key) end
-					end
-				end,
-			})
 		end
 
 		return Tab
@@ -2807,7 +2631,7 @@ function OceanUI:CreateWindow(config)
 	function Window:Destroy()
 		if win:GetAttribute("Closing") then return end
 		win:SetAttribute("Closing", true)
-		closeOceanPanels()
+		closeVantixPanels()
 
 		local winScale = Instance.new("UIScale")
 		winScale.Scale = 1
@@ -2835,14 +2659,12 @@ function OceanUI:CreateWindow(config)
 		win.Size = UDim2.new(0, WIN_W, 0, WIN_H)
 		titlebar.Visible = true
 		body.Visible = true
-		cursorSink.Visible = true
 		pcall(function() tw(body,{BackgroundTransparency=0},0.28):Play() end)
 		pcall(function() tw(contentArea,{BackgroundTransparency=0},0.28):Play() end)
 		if sidebar then pcall(function() tw(sidebar,{BackgroundTransparency=0},0.28):Play() end) end
 		pcall(function()
 			for _,d in ipairs(loadLayer:GetDescendants()) do
 				if d:IsA("TextLabel") then tw(d,{TextTransparency=1},0.2):Play()
-				elseif d:IsA("ImageLabel") then tw(d,{ImageTransparency=1},0.2):Play()
 				elseif d:IsA("Frame") then tw(d,{BackgroundTransparency=1},0.2):Play() end
 			end
 			tw(loadLayer,{BackgroundTransparency=1},0.22):Play()
@@ -2856,15 +2678,21 @@ function OceanUI:CreateWindow(config)
 			tw(win,{Size=UDim2.new(0,WIN_W,0,WIN_H)},0.38,Enum.EasingStyle.Back,Enum.EasingDirection.Out):Play()
 			task.wait(0.28)
 
-			logoImg.Position=UDim2.new(0.5,0,0.5,10)
-			tw(logoImg,{ImageTransparency=0,Position=UDim2.new(0.5,0,0.5,0)},0.44,Enum.EasingStyle.Quint):Play()
-			tw(logoScale,{Scale=1},0.5,Enum.EasingStyle.Back,Enum.EasingDirection.Out):Play()
+			local STEP=0.11
+			for i,d in ipairs(charDefs) do
+				task.delay((i-1)*STEP,function()
+					pcall(function()
+						d.label.Position=UDim2.new(0.5,0,0.5,d.yo+10)
+						tw(d.label,{TextTransparency=0,Position=UDim2.new(0.5,0,0.5,d.yo)},0.44,Enum.EasingStyle.Quint):Play()
+					end)
+				end)
+			end
 
-			task.delay(0.5,function()
+			task.delay(#CHARS*STEP+0.06,function()
 				pcall(function() tw(loadSub,{TextTransparency=0},0.4):Play() end)
 			end)
 
-			local shimAt=0.9
+			local shimAt=#CHARS*STEP+0.44
 			task.delay(shimAt,function()
 				pcall(function()
 					shimF.BackgroundTransparency=0
@@ -2922,7 +2750,7 @@ function OceanUI:CreateWindow(config)
 
 	Window.ConfigManager = {}
 	local ConfigManager = Window.ConfigManager
-	ConfigManager.Folder = "OceanUI_Configs"
+	ConfigManager.Folder = "VantixUI_Configs"
 
 	function ConfigManager:SetFolder(name)
 		self.Folder = name
@@ -2931,13 +2759,10 @@ function OceanUI:CreateWindow(config)
 
 	function ConfigManager:GetConfigs()
 		local list = {}
-		if files and listfiles and isfolder(self.Folder) then
-			local ok, entries = pcall(listfiles, self.Folder)
-			if ok and entries then
-				for _, file in ipairs(entries) do
-					local name = file:match("([^/\\]+)%.json$")
-					if name then list[#list + 1] = name end
-				end
+		if files and isfolder(self.Folder) then
+			for _, file in ipairs(listfiles(self.Folder)) do
+				local name = file:match("([^/\\]+)%.json$")
+				if name then list[#list + 1] = name end
 			end
 		end
 		return list
@@ -2991,35 +2816,10 @@ function OceanUI:CreateWindow(config)
 		return activeThemeName
 	end
 
-	function Window:Minimize()
-		doMinimize()
-	end
-
-	function Window:Restore()
-		doRestore()
-	end
-
-	function Window:Toggle()
-		if minimized then doRestore() else doMinimize() end
-	end
-
-	function Window:IsMinimized()
-		return minimized
-	end
-
-	-- rebind (or disable with nil) the built-in minimize/restore hotkey
-	function Window:SetToggleKey(key)
-		setToggleKey(key)
-	end
-
-	function Window:GetToggleKey()
-		return toggleKey
-	end
-
 	return Window
 end
 
-function OceanUI:CreateNewWindow(config)
+function VantixUI:CreateNewWindow(config)
 	config = config or {}
 	local width = (config.Size and config.Size[1]) or 300
 	local title = config.Title or "Panel"
@@ -3035,11 +2835,11 @@ function OceanUI:CreateNewWindow(config)
 	end)
 
 	local sg = inst("ScreenGui", {
-		Name = config.Name or "OceanPanel", ResetOnSpawn = false,
+		Name = config.Name or "VantixPanel", ResetOnSpawn = false,
 		IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		DisplayOrder = 998,
 	}, parent)
-	OceanPanels[#OceanPanels + 1] = sg
+	VantixPanels[#VantixPanels + 1] = sg
 
 	local card = frame(sg, {
 		name = "Card", trans = 1,
@@ -3184,4 +2984,9 @@ function OceanUI:CreateNewWindow(config)
 	return Panel
 end
 
-return OceanUI
+-- skipped when loaded by VantixUI6_Example_Beta, which provides its own test
+if RUN_BETA_TEST and not rawget(getgenv(), "VantixExampleBeta") then
+	pcall(VantixUITest, VantixUI)
+end
+
+return VantixUI

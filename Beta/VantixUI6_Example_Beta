@@ -1,12 +1,12 @@
-getgenv().OceanExampleBeta = true
+getgenv().VantixExampleBeta = true
 
-local url = "https://raw.githubusercontent.com/Snipez-Dev/Ocean/refs/heads/main/OCEUI6_Beta"
+local url = "https://raw.githubusercontent.com/Snipez-Dev/Vantix/refs/heads/main/VantixUI6_Beta"
 
-local OceanUI = loadstring(game:HttpGet(url))()
+local VantixUI = loadstring(game:HttpGet(url))()
 
-local Window = OceanUI:CreateWindow({
+local Window = VantixUI:CreateWindow({
 	Title = "Showcase",
-	Theme = "Ocean",
+	Theme = "Vantix",
 	Size = {820, 480},
 })
 
@@ -23,7 +23,7 @@ Window:Notify({
 
 local MainTab = Window:AddTab("Main", "home")
 
-MainTab:AddLabel("Welcome to the OceanUI Showcase", "info")
+MainTab:AddLabel("Welcome to the VantixUI Showcase", "info")
 MainTab:AddSeparator()
 
 local godmode = MainTab:AddToggle({
@@ -124,8 +124,8 @@ local uiKeybind = SettingsTab:AddKeybind({
 	Icon     = "keyboard",
 	Default  = Enum.KeyCode.RightShift,
 	Callback = function()
-		local sg = game:GetService("CoreGui"):FindFirstChild("OceanUI")
-			or game.Players.LocalPlayer.PlayerGui:FindFirstChild("OceanUI")
+		local sg = game:GetService("CoreGui"):FindFirstChild("VantixUI")
+			or game.Players.LocalPlayer.PlayerGui:FindFirstChild("VantixUI")
 		if sg then sg.Enabled = not sg.Enabled end
 	end,
 })
@@ -144,7 +144,7 @@ SettingsTab:AddButton({
 SettingsTab:AddSeparator()
 SettingsTab:AddLabel("Config System", "save")
 
-Window.ConfigManager:SetFolder("OceanUI_Examples")
+Window.ConfigManager:SetFolder("VantixUI_Examples")
 local MyConfig = Window.ConfigManager:CreateConfig("Showcase")
 
 MyConfig:RegisterElement("GodMode",        godmode)
