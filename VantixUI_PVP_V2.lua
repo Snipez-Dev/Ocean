@@ -4999,7 +4999,7 @@ function library:CreateSettingsTab(menu)
     end});
 
     mainSection:AddButton({text = 'Copy Discord', flag = 'copydiscord', callback = function()
-        setclipboard('discord.gg/VantixUI')
+        setclipboard('discord.gg/GUXhJuaqsF')
         library:SendNotification('Discord link copied!', 3)
     end})
 

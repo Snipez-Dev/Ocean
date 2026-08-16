@@ -13,7 +13,7 @@ local Window = VantixUI:CreateWindow({
 Window:CreateTag("Beta",    Color3.fromRGB(240, 100, 100), nil, "flask-conical")
 Window:CreateTag("Premium", Color3.fromRGB(255, 180, 50),  nil, "crown")
 Window:CreateTag("v7.0",    Color3.fromRGB(60, 120, 210),  nil, "git-branch")
-Window:CreateTag("discord.gg/Ab73VVR4JK", Color3.fromRGB(88, 101, 242), nil, nil, true)
+Window:CreateTag("discord.gg/GUXhJuaqsF", Color3.fromRGB(88, 101, 242), nil, nil, true)
 
 Window:Notify({
 	Title    = "Welcome",
