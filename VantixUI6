@@ -38,6 +38,7 @@ end
 
 local CORNER = 10
 local RISKY  = Color3.fromRGB(235, 80, 80)
+local BETA   = Color3.fromRGB(235, 190, 60)
 local ROW_PAD = 14
 
 local THEMES = {
@@ -1671,10 +1672,12 @@ function VantixUI:CreateWindow(config)
 	end)
 
 	local pillText = "Open " .. TITLE
+	local pillTextX = lucide and 33 or 10
+	local pillTextPad = 14
 	local pillW = 156
 	pcall(function()
 		local w = game:GetService("TextService"):GetTextSize(pillText, 12, Enum.Font.GothamMedium, Vector2.new(1000, 30)).X
-		pillW = math.max(140, w + (lucide and 74 or 58))
+		pillW = math.max(140, w + 41 + pillTextX + pillTextPad)
 	end)
 
 	local minOverlay = frame(sg, {
@@ -1728,7 +1731,7 @@ function VantixUI:CreateWindow(config)
 
 	lbl(clickArea, {
 		text=pillText, font=Enum.Font.GothamMedium, size=12, colorKey="white",
-		sz=UDim2.new(1,-34,1,0), pos=UDim2.new(0, (lucide and 33 or 10),0,0), xa=Enum.TextXAlignment.Left, z=103
+		sz=UDim2.new(1,-(pillTextX + pillTextPad),1,0), pos=UDim2.new(0, pillTextX,0,0), xa=Enum.TextXAlignment.Left, z=103
 	})
 
 	clickArea.MouseEnter:Connect(function() tw(minOverlay,{BackgroundColor3=K.raised},0.12):Play() end)
@@ -2275,6 +2278,132 @@ function VantixUI:CreateWindow(config)
 		tw(cardScale,{Scale=1},0.2,Enum.EasingStyle.Back):Play()
 	end
 
+	local betaAcknowledged = false
+
+	local betaModalOpen = false
+	local betaQueue = {}
+
+	local function showBetaConfirm(onYes, onNo)
+		if betaAcknowledged then
+			if onYes then onYes() end
+			return
+		end
+		if betaModalOpen then
+			table.insert(betaQueue, {onYes, onNo})
+			return
+		end
+		betaModalOpen = true
+
+		local backdrop = inst("TextButton", {
+			Name="BetaBackdrop", BackgroundColor3=Color3.new(0,0,0),
+			BackgroundTransparency=1, Text="", AutoButtonColor=false,
+			Size=UDim2.fromScale(1,1), ZIndex=500,
+		}, sg)
+
+		local card = inst("CanvasGroup", {
+			Name="BetaCard", BackgroundColor3=K.bg, GroupTransparency=1,
+			Size=UDim2.new(0,320,0,0), AutomaticSize=Enum.AutomaticSize.Y,
+			Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5),
+			ZIndex=501,
+		}, backdrop)
+		rnd(card,12)
+		brd(card,"borderHi",1)
+		registerThemeUpdater(function() card.BackgroundColor3 = K.bg end, card)
+		local cardScale = inst("UIScale", {Scale=0.9}, card)
+		pad(card,18,18,18,18)
+		inst("UIListLayout",{
+			FillDirection=Enum.FillDirection.Vertical,
+			SortOrder=Enum.SortOrder.LayoutOrder,
+			Padding=UDim.new(0,14),
+		}, card)
+
+		local iconLoaded = lucide and getLucide("flask-conical", 22) ~= ""
+
+		local header = inst("Frame",{
+			Name="Header", BackgroundTransparency=1,
+			Size=UDim2.new(1,0,0, iconLoaded and 40 or 20), LayoutOrder=1, ZIndex=502,
+		}, card)
+
+		if iconLoaded then
+			local iconBox = inst("Frame",{
+				Name="IconBox", BackgroundColor3=BETA, BackgroundTransparency=0.85,
+				Size=UDim2.new(0,40,0,40), ZIndex=503,
+			}, header)
+			rnd(iconBox,10)
+			img(iconBox,{
+				name="Ic", img=getLucide("flask-conical", 22),
+				color=BETA, sz=UDim2.new(0,22,0,22),
+				pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=504,
+			})
+		end
+
+		lbl(header,{
+			text="Beta Feature", font=Enum.Font.GothamBold, size=16, colorKey="text",
+			sz=UDim2.new(1,iconLoaded and -52 or 0,0,20),
+			pos=UDim2.new(0,iconLoaded and 52 or 0,0.5,0), anchor=Vector2.new(0,0.5), z=503,
+		})
+
+		local body = lbl(card,{
+			text="Features marked in yellow are still in testing and may be incomplete, unstable, or change without notice. Use with that in mind.",
+			font=Enum.Font.Gotham, size=13, colorKey="sub", wrap=true,
+			sz=UDim2.new(1,0,0,0), pos=UDim2.new(0,0,0,0), z=502, ya=Enum.TextYAlignment.Top,
+		})
+		body.LayoutOrder = 2
+		body.AutomaticSize = Enum.AutomaticSize.Y
+
+		local btnRow = inst("Frame",{
+			Name="Btns", BackgroundTransparency=1,
+			Size=UDim2.new(1,0,0,36), LayoutOrder=3, ZIndex=502,
+		}, card)
+
+		local noBtn = btn(btnRow,{
+			name="No", text="Cancel", font=Enum.Font.GothamMedium, size=13,
+			colorKey="raised", tcKey="sub",
+			sz=UDim2.new(0.5,-4,1,0), pos=UDim2.new(0,0,0,0), z=503,
+		})
+		rnd(noBtn,7)
+		noBtn.MouseEnter:Connect(function() tw(noBtn,{BackgroundColor3=K.border},0.1):Play() end)
+		noBtn.MouseLeave:Connect(function() tw(noBtn,{BackgroundColor3=K.raised},0.1):Play() end)
+
+		local yesBtn = btn(btnRow,{
+			name="Yes", text="I Understand", font=Enum.Font.GothamBold, size=13,
+			colorKey="white", tcKey="black",
+			sz=UDim2.new(0.5,-4,1,0), pos=UDim2.new(1,0,0,0), anchor=Vector2.new(1,0), z=503,
+		})
+		rnd(yesBtn,7)
+		yesBtn.MouseEnter:Connect(function() tw(yesBtn,{BackgroundColor3=shade(K.white,0.85)},0.1):Play() end)
+		yesBtn.MouseLeave:Connect(function() tw(yesBtn,{BackgroundColor3=K.white},0.1):Play() end)
+
+		local function close(confirmed)
+			betaModalOpen = false
+			tw(backdrop,{BackgroundTransparency=1},0.12):Play()
+			tw(card,{GroupTransparency=1},0.12):Play()
+			local st = tw(cardScale,{Scale=0.92},0.12)
+			st.Completed:Connect(function() backdrop:Destroy() end)
+			st:Play()
+
+			if confirmed then
+				betaAcknowledged = true
+				if onYes then onYes() end
+			elseif onNo then
+				onNo()
+			end
+
+			local nextItem = table.remove(betaQueue, 1)
+			if nextItem then
+				task.defer(showBetaConfirm, nextItem[1], nextItem[2])
+			end
+		end
+
+		noBtn.MouseButton1Click:Connect(function() close(false) end)
+		yesBtn.MouseButton1Click:Connect(function() close(true) end)
+		backdrop.MouseButton1Click:Connect(function() close(false) end)
+
+		tw(backdrop,{BackgroundTransparency=0.45},0.16):Play()
+		tw(card,{GroupTransparency=0},0.16,Enum.EasingStyle.Quint):Play()
+		tw(cardScale,{Scale=1},0.2,Enum.EasingStyle.Back):Play()
+	end
+
 	function Window:AddTab(tabName, iconName)
 		tabCount = tabCount + 1
 		local tabKey = tabName
@@ -2393,8 +2522,9 @@ function VantixUI:CreateWindow(config)
 			currentGroup = nil
 		end
 
-		local function makeRow(title, subtitle, iconName, risky, tooltipText)
+		local function makeRow(title, subtitle, iconName, risky, tooltipText, beta)
 			local group, isFirst, orderInGroup = getGroup()
+			local accentColor = risky and RISKY or beta and BETA or nil
 			local rowH = subtitle and 54 or 42
 			local r = frame(group,{
 				name="Row_"..title, colorKey="bg", trans=1,
@@ -2420,14 +2550,14 @@ function VantixUI:CreateWindow(config)
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
+					color=accentColor, colorKey=not accentColor and "text" or nil,
 					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,ROW_PAD,0.5,0), anchor=Vector2.new(0,0.5), z=8,
 				})
 			end
 
 			lbl(r,{
 				text=title, font=Enum.Font.GothamMedium, size=14,
-				color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
+				color=accentColor, colorKey=not accentColor and "text" or nil,
 				sz=UDim2.new(0.6,0,0,20),
 				pos=UDim2.new(0,textOffset,0, subtitle and 8 or 11), z=8,
 			})
@@ -2441,8 +2571,9 @@ function VantixUI:CreateWindow(config)
 			return r
 		end
 
-		local function makeSliderRow(title, iconName, risky, tooltipText)
+		local function makeSliderRow(title, iconName, risky, tooltipText, beta)
 			local group, isFirst, orderInGroup = getGroup()
+			local accentColor = risky and RISKY or beta and BETA or nil
 			local r = frame(group,{
 				name="SlRow_"..title, colorKey="bg", trans=1,
 				size=UDim2.new(1,0,0,60), z=7,
@@ -2467,14 +2598,14 @@ function VantixUI:CreateWindow(config)
 			if iconName and lucide then
 				img(r,{
 					name="Icon", img=getLucide(iconName, 20),
-					color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
+					color=accentColor, colorKey=not accentColor and "text" or nil,
 					sz=UDim2.new(0,21,0,21), pos=UDim2.new(0,ROW_PAD,0,10), z=8,
 				})
 			end
 
 			lbl(r,{
 				text=title, font=Enum.Font.GothamMedium, size=14,
-				color=risky and RISKY or nil, colorKey=not risky and "text" or nil,
+				color=accentColor, colorKey=not accentColor and "text" or nil,
 				sz=UDim2.new(1,0,0,20), pos=UDim2.new(0,textOffset,0,10), z=8,
 			})
 
@@ -2483,8 +2614,10 @@ function VantixUI:CreateWindow(config)
 
 		function Tab:AddToggle(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Toggle", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
-			local guard = opts.Risky and function(proceed) showRiskyConfirm(proceed, nil) end or nil
+			local r = makeRow(opts.Title or "Toggle", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
+			local guard = opts.Risky and function(proceed) showRiskyConfirm(proceed, nil) end
+				or opts.Beta and function(proceed) showBetaConfirm(proceed, nil) end
+				or nil
 			local tog = makeToggle(r, opts.Default or false, guard)
 			tog.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
 			tog.frame.AnchorPoint = Vector2.new(1,0.5)
@@ -2512,7 +2645,7 @@ function VantixUI:CreateWindow(config)
 
 		function Tab:AddSlider(opts)
 			opts = opts or {}
-			local r = makeSliderRow(opts.Title or "Slider", opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeSliderRow(opts.Title or "Slider", opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
 			local sl = makeSlider(r, opts.Min or 0, opts.Max or 100, opts.Default or 0)
 			sl.frame.Position = UDim2.new(0,ROW_PAD,0,30)
 			sl.frame.Size     = UDim2.new(1,-ROW_PAD*2,sl.frame.Size.Y.Scale,sl.frame.Size.Y.Offset)
@@ -2547,8 +2680,8 @@ function VantixUI:CreateWindow(config)
 
 		function Tab:AddButton(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Button", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
-			
+			local r = makeRow(opts.Title or "Button", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
+
 			local btnText = opts.ButtonText or opts.Text or "Execute"
 			local bW = 70
 			pcall(function() bW = math.max(70, game:GetService("TextService"):GetTextSize(btnText, 12, Enum.Font.GothamMedium, Vector2.new(1000, 30)).X + 24) end)
@@ -2579,6 +2712,8 @@ function VantixUI:CreateWindow(config)
 			ab.MouseButton1Click:Connect(function()
 				if opts.Risky then
 					showRiskyConfirm(fireButton, nil)
+				elseif opts.Beta then
+					showBetaConfirm(fireButton, nil)
 				else
 					fireButton()
 				end
@@ -2624,7 +2759,7 @@ function VantixUI:CreateWindow(config)
 
 		function Tab:AddDropdown(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Dropdown", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Dropdown", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
 
 			local onOpenStart = function()
 				for _, closer in ipairs(allDropdownClosers) do pcall(closer) end
@@ -2653,7 +2788,7 @@ function VantixUI:CreateWindow(config)
 
 		function Tab:AddMultiDropdown(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Multi Dropdown", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Multi Dropdown", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
 
 			local onOpenStart = function()
 				for _, closer in ipairs(allDropdownClosers) do pcall(closer) end
@@ -2682,7 +2817,7 @@ function VantixUI:CreateWindow(config)
 
 		function Tab:AddTextBox(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Input", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Input", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
 
 			local tb = makeTextBox(r, opts.Placeholder, opts.Default)
 			tb.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
@@ -2702,7 +2837,7 @@ function VantixUI:CreateWindow(config)
 
 		function Tab:AddColorPicker(opts)
 			opts = opts or {}
-			local r = makeRow(opts.Title or "Color Picker", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Color Picker", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
 			
 			local defaultColor = opts.Default or Color3.fromRGB(255,255,255)
 			if type(opts.Default) == "string" then
@@ -2734,7 +2869,7 @@ function VantixUI:CreateWindow(config)
 		function Tab:AddKeybind(opts)
 			opts = opts or {}
 			local currentKey = opts.Default or Enum.KeyCode.Unknown
-			local r = makeRow(opts.Title or "Keybind", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip)
+			local r = makeRow(opts.Title or "Keybind", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
 			local changedEvent = Instance.new("BindableEvent")
 
 			local keyBtn = btn(r,{
@@ -2760,6 +2895,8 @@ function VantixUI:CreateWindow(config)
 					if currentKey ~= Enum.KeyCode.Unknown and inp.KeyCode == currentKey and not UIS:GetFocusedTextBox() and opts.Callback then
 						if opts.Risky then
 							showRiskyConfirm(function() pcall(opts.Callback) end, nil)
+						elseif opts.Beta then
+							showBetaConfirm(function() pcall(opts.Callback) end, nil)
 						else
 							pcall(opts.Callback)
 						end
