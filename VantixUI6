@@ -2090,7 +2090,7 @@ function VantixUI:CreateWindow(config)
 		tooltipBg.Visible = false
 	end
 
-	function Window:CreateTag(text, bgColor, textColor, iconName)
+	function Window:CreateTag(text, bgColor, textColor, iconName, copyButton)
 		tagCount = tagCount + 1
 		local accent = bgColor
 		local tWrap = frame(tagContainer,{
@@ -2120,12 +2120,33 @@ function VantixUI:CreateWindow(config)
 		end
 
 		local tLbl = lbl(tWrap,{
-			text=text, font=Enum.Font.GothamMedium, size=11,
+			text=text, font=Enum.Font.GothamMedium, size=12,
 			color=textColor, colorKey=not textColor and "text" or nil,
 			sz=UDim2.new(0,0,0,0), z=7, xa=Enum.TextXAlignment.Center, ya=Enum.TextYAlignment.Center,
 		})
 		tLbl.AutomaticSize = Enum.AutomaticSize.XY
 		tLbl.LayoutOrder = 1
+
+		if copyButton then
+			tWrap.Active = true
+
+			tWrap.MouseEnter:Connect(function(x, y) showTooltip("Click to copy", x, y) end)
+			tWrap.MouseMoved:Connect(function(x, y) moveTooltip(x, y) end)
+			tWrap.MouseLeave:Connect(hideTooltip)
+
+			tWrap.InputBegan:Connect(function(input)
+				if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+				if setclipboard then
+					setclipboard(text)
+				elseif toclipboard then
+					toclipboard(text)
+				else
+					return
+				end
+				showTooltip("Copied!", input.Position.X, input.Position.Y)
+				task.delay(0.8, hideTooltip)
+			end)
+		end
 	end
 
 	local riskyAcknowledged = false
