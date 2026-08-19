@@ -1376,7 +1376,17 @@ function VantixUI:CreateWindow(config)
 	local TITLE  = config.Title or "Vantix"
 	local LOGO   = (config.Logo or config.LogoID) and tostring(config.Logo or config.LogoID) or LOGO_ASSET
 
-	local existing = CoreGui:FindFirstChild("VantixUI")
+	-- stealth parent chain: gethui -> cloneref(CoreGui) -> CoreGui
+	local guiParent = CoreGui
+	pcall(function()
+		if typeof(gethui) == "function" then
+			guiParent = gethui()
+		elseif typeof(cloneref) == "function" then
+			guiParent = cloneref(CoreGui)
+		end
+	end)
+
+	local existing = guiParent:FindFirstChild("VantixUI") or CoreGui:FindFirstChild("VantixUI")
 	if existing then existing:Destroy() end
 	closeVantixPanels()
 
@@ -1385,7 +1395,7 @@ function VantixUI:CreateWindow(config)
 		Name="VantixUI", ResetOnSpawn=false,
 		IgnoreGuiInset=true, ZIndexBehavior=Enum.ZIndexBehavior.Sibling,
 		DisplayOrder=999,
-	}, CoreGui)
+	}, guiParent)
 
 	
 	local cursorSink = inst("TextButton",{
@@ -1631,14 +1641,14 @@ function VantixUI:CreateWindow(config)
 			name="Icon", img=getLucide(iconName, 18),
 			colorKey="sub", sz=UDim2.new(0,19,0,19), pos=UDim2.new(0.5,0,0.5,0), anchor=Vector2.new(0.5,0.5), z=8
 		})
-		b.MouseEnter:Connect(function() 
+		b.MouseEnter:Connect(function()
 			b:SetAttribute("Hovered", true)
-			tw(b,{BackgroundTransparency=0, BackgroundColor3=isClose and Color3.fromRGB(220,60,60) or K.border},0.1):Play() 
+			tw(b,{BackgroundTransparency=0, BackgroundColor3=isClose and Color3.fromRGB(220,60,60) or K.border},0.1):Play()
 			tw(ic,{ImageColor3=K.white},0.1):Play()
 		end)
-		b.MouseLeave:Connect(function() 
+		b.MouseLeave:Connect(function()
 			b:SetAttribute("Hovered", false)
-			tw(b,{BackgroundTransparency=1, BackgroundColor3=K.raised},0.1):Play() 
+			tw(b,{BackgroundTransparency=1, BackgroundColor3=K.raised},0.1):Play()
 			tw(ic,{ImageColor3=K.sub},0.1):Play()
 		end)
 		return b
@@ -1765,6 +1775,7 @@ function VantixUI:CreateWindow(config)
 	end
 	local minimized = false
 	local animating = false
+	local winRestorePos = win.Position
 
 	local function doMinimize()
 		if minimized or animating then return end
@@ -1779,17 +1790,25 @@ function VantixUI:CreateWindow(config)
 		local curSize = win.Size
 		win:SetAttribute("RestoreSizeX", curSize.X.Offset)
 		win:SetAttribute("RestoreSizeY", curSize.Y.Offset)
-		
+		winRestorePos = win.Position
+
 		minOverlay.Visible = true
 		minOverlay.ZIndex = 1000
 		minOverlay.BackgroundTransparency = 0
 		minOverlay.Position = UDim2.new(savedMinPos.X.Scale, savedMinPos.X.Offset, savedMinPos.Y.Scale, savedMinPos.Y.Offset - 40)
 		tw(minOverlay, {Position = savedMinPos}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
 
-		local t = tw(win, {Size=UDim2.new(0, curSize.X.Offset, 0, 0), BackgroundTransparency=1}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+		-- collapses toward wherever the pill actually rests (savedMinPos), not just in place,
+		-- so the shrink reads as "becoming the pill" instead of two disconnected animations
+		local t = tw(win, {
+			Size = UDim2.new(0, pillW, 0, 0),
+			Position = savedMinPos,
+			BackgroundTransparency = 1,
+		}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 		t.Completed:Connect(function()
 			win.Visible = false
 			win.ClipsDescendants = false
+			win.Position = winRestorePos
 			animating = false
 		end)
 		t:Play()
@@ -1813,7 +1832,15 @@ function VantixUI:CreateWindow(config)
 				rW = win:GetAttribute("RestoreSizeX") or math.clamp(config.Size[1], 200, vp.X - 20)
 				rH = win:GetAttribute("RestoreSizeY") or math.clamp(config.Size[2], 200, vp.Y - 40)
 			end
-			local tr = tw(win,{Size=UDim2.new(0, rW, 0, rH), BackgroundTransparency=0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			-- grows back out from the pill's position, mirroring how it collapsed into it
+			win.Size = UDim2.new(0, pillW, 0, 0)
+			win.Position = savedMinPos
+			win.BackgroundTransparency = 1
+			local tr = tw(win,{
+				Size = UDim2.new(0, rW, 0, rH),
+				Position = winRestorePos,
+				BackgroundTransparency = 0,
+			}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			tr.Completed:Connect(function()
 				win.ClipsDescendants = false
 				tw(outerGlow, {BackgroundTransparency=0.93}, 0.15):Play()
@@ -2157,13 +2184,13 @@ function VantixUI:CreateWindow(config)
 	local riskyModalOpen = false
 	local riskyQueue = {}
 
-	local function showRiskyConfirm(onYes, onNo)
+	local function showRiskyConfirm(onYes, onNo, customText)
 		if riskyAcknowledged then
 			if onYes then onYes() end
 			return
 		end
 		if riskyModalOpen then
-			table.insert(riskyQueue, {onYes, onNo})
+			table.insert(riskyQueue, {onYes, onNo, customText})
 			return
 		end
 		riskyModalOpen = true
@@ -2218,7 +2245,7 @@ function VantixUI:CreateWindow(config)
 		})
 
 		local body = lbl(card,{
-			text="Features marked in red carry extra risk of detection, instability, or unintended side effects. Make sure you understand what you're enabling before you continue.",
+			text=customText or "Features marked in red carry extra risk of detection, instability, or unintended side effects. Make sure you understand what you're enabling before you continue.",
 			font=Enum.Font.Gotham, size=13, colorKey="sub", wrap=true,
 			sz=UDim2.new(1,0,0,0), pos=UDim2.new(0,0,0,0), z=502, ya=Enum.TextYAlignment.Top,
 		})
@@ -2265,7 +2292,7 @@ function VantixUI:CreateWindow(config)
 
 			local nextItem = table.remove(riskyQueue, 1)
 			if nextItem then
-				task.defer(showRiskyConfirm, nextItem[1], nextItem[2])
+				task.defer(showRiskyConfirm, nextItem[1], nextItem[2], nextItem[3])
 			end
 		end
 
@@ -2283,13 +2310,13 @@ function VantixUI:CreateWindow(config)
 	local betaModalOpen = false
 	local betaQueue = {}
 
-	local function showBetaConfirm(onYes, onNo)
+	local function showBetaConfirm(onYes, onNo, customText)
 		if betaAcknowledged then
 			if onYes then onYes() end
 			return
 		end
 		if betaModalOpen then
-			table.insert(betaQueue, {onYes, onNo})
+			table.insert(betaQueue, {onYes, onNo, customText})
 			return
 		end
 		betaModalOpen = true
@@ -2344,7 +2371,7 @@ function VantixUI:CreateWindow(config)
 		})
 
 		local body = lbl(card,{
-			text="Features marked in yellow are still in testing and may be incomplete, unstable, or change without notice. Use with that in mind.",
+			text=customText or "Features marked in yellow are still in testing and may be incomplete, unstable, or change without notice. Use with that in mind.",
 			font=Enum.Font.Gotham, size=13, colorKey="sub", wrap=true,
 			sz=UDim2.new(1,0,0,0), pos=UDim2.new(0,0,0,0), z=502, ya=Enum.TextYAlignment.Top,
 		})
@@ -2391,7 +2418,7 @@ function VantixUI:CreateWindow(config)
 
 			local nextItem = table.remove(betaQueue, 1)
 			if nextItem then
-				task.defer(showBetaConfirm, nextItem[1], nextItem[2])
+				task.defer(showBetaConfirm, nextItem[1], nextItem[2], nextItem[3])
 			end
 		end
 
@@ -2615,8 +2642,8 @@ function VantixUI:CreateWindow(config)
 		function Tab:AddToggle(opts)
 			opts = opts or {}
 			local r = makeRow(opts.Title or "Toggle", opts.Subtitle, opts.Icon, opts.Risky, opts.Tooltip, opts.Beta)
-			local guard = opts.Risky and function(proceed) showRiskyConfirm(proceed, nil) end
-				or opts.Beta and function(proceed) showBetaConfirm(proceed, nil) end
+			local guard = opts.Risky and function(proceed) showRiskyConfirm(proceed, nil, typeof(opts.Risky)=="string" and opts.Risky or nil) end
+				or opts.Beta and function(proceed) showBetaConfirm(proceed, nil, typeof(opts.Beta)=="string" and opts.Beta or nil) end
 				or nil
 			local tog = makeToggle(r, opts.Default or false, guard)
 			tog.frame.Position   = UDim2.new(1,-ROW_PAD,0.5,0)
@@ -2711,9 +2738,9 @@ function VantixUI:CreateWindow(config)
 			end
 			ab.MouseButton1Click:Connect(function()
 				if opts.Risky then
-					showRiskyConfirm(fireButton, nil)
+					showRiskyConfirm(fireButton, nil, typeof(opts.Risky)=="string" and opts.Risky or nil)
 				elseif opts.Beta then
-					showBetaConfirm(fireButton, nil)
+					showBetaConfirm(fireButton, nil, typeof(opts.Beta)=="string" and opts.Beta or nil)
 				else
 					fireButton()
 				end
@@ -2754,6 +2781,79 @@ function VantixUI:CreateWindow(config)
 			return {
 				Set = function(_, newText) l.Text = newText end,
 				Get = function() return l.Text end,
+			}
+		end
+
+		function Tab:AddConsole(opts)
+			opts = opts or {}
+			endGroup()
+			rowCounter = rowCounter + 1
+
+			local h = opts.Height or 140
+			local titleH = opts.Title and 24 or 0
+
+			local wrap = frame(scroll,{
+				name="ConsoleRow", colorKey="bg", trans=1,
+				size=UDim2.new(1,0,0,h+titleH+ROW_PAD), z=7,
+			})
+			wrap.LayoutOrder = rowCounter
+
+			if opts.Title then
+				lbl(wrap,{
+					text=opts.Title, font=Enum.Font.GothamMedium, size=13, colorKey="text",
+					sz=UDim2.new(1,0,0,18), pos=UDim2.new(0,0,0,0), z=8,
+				})
+			end
+
+			local box = frame(wrap,{
+				name="Box", colorKey="raised", clip=true,
+				size=UDim2.new(1,0,0,h), pos=UDim2.new(0,0,0,titleH), z=8,
+			})
+			rnd(box,8)
+			brd(box,"border",1)
+
+			local out = inst("ScrollingFrame",{
+				Name="Out", BackgroundTransparency=1, BorderSizePixel=0,
+				Size=UDim2.new(1,-16,1,-12), Position=UDim2.new(0,8,0,6),
+				CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
+				ScrollBarThickness=4, ScrollBarImageColor3=K.border,
+				ZIndex=9,
+			}, box)
+
+			local textLbl = lbl(out,{
+				text=opts.Text or "", font=Enum.Font.Code, size=12, colorKey="sub", wrap=true,
+				sz=UDim2.new(1,0,0,0), pos=UDim2.new(0,0,0,0), z=10,
+				xa=Enum.TextXAlignment.Left, ya=Enum.TextYAlignment.Top,
+			})
+			textLbl.AutomaticSize = Enum.AutomaticSize.Y
+
+			frame(wrap,{
+				name="Div", colorKey="border", trans=0.45,
+				size=UDim2.new(1,0,0,1), pos=UDim2.new(0,0,1,-1), z=8,
+			})
+
+			local maxLines = opts.MaxLines or 300
+			local lines = opts.Text and opts.Text ~= "" and string.split(opts.Text, "\n") or {}
+
+			local function redraw()
+				textLbl.Text = table.concat(lines, "\n")
+				task.defer(function()
+					out.CanvasPosition = Vector2.new(0, math.max(0, textLbl.AbsoluteSize.Y - out.AbsoluteSize.Y))
+				end)
+			end
+
+			return {
+				Write = function(_, line)
+					table.insert(lines, tostring(line))
+					while #lines > maxLines do table.remove(lines, 1) end
+					redraw()
+				end,
+				Set = function(_, newText)
+					lines = newText ~= "" and string.split(tostring(newText), "\n") or {}
+					redraw()
+				end,
+				Get = function() return table.concat(lines, "\n") end,
+				Clear = function() lines = {}; redraw() end,
 			}
 		end
 
@@ -2894,9 +2994,9 @@ function VantixUI:CreateWindow(config)
 				if not listening then
 					if currentKey ~= Enum.KeyCode.Unknown and inp.KeyCode == currentKey and not UIS:GetFocusedTextBox() and opts.Callback then
 						if opts.Risky then
-							showRiskyConfirm(function() pcall(opts.Callback) end, nil)
+							showRiskyConfirm(function() pcall(opts.Callback) end, nil, typeof(opts.Risky)=="string" and opts.Risky or nil)
 						elseif opts.Beta then
-							showBetaConfirm(function() pcall(opts.Callback) end, nil)
+							showBetaConfirm(function() pcall(opts.Callback) end, nil, typeof(opts.Beta)=="string" and opts.Beta or nil)
 						else
 							pcall(opts.Callback)
 						end

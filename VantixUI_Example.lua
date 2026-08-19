@@ -12,7 +12,7 @@ local Window = VantixUI:CreateWindow({
 
 Window:CreateTag("Beta",    Color3.fromRGB(240, 100, 100), nil, "flask-conical")
 Window:CreateTag("Premium", Color3.fromRGB(255, 180, 50),  nil, "crown")
-Window:CreateTag("v7.0",    Color3.fromRGB(60, 120, 210),  nil, "git-branch")
+Window:CreateTag("v2.0",    Color3.fromRGB(60, 120, 210),  nil, "git-branch")
 Window:CreateTag("discord.gg/GUXhJuaqsF", Color3.fromRGB(88, 101, 242), nil, nil, true)
 
 Window:Notify({
@@ -58,6 +58,24 @@ local godmode = MainTab:AddToggle({
 	end,
 })
 
+local autoFarm = MainTab:AddToggle({
+	Title    = "Auto Farm",
+	Subtitle = "Automatically collects nearby items",
+	Icon     = "flask-conical",
+	Default  = false,
+	Beta     = true,
+	Tooltip  = "Still being tuned, may miss items or behave inconsistently",
+	Callback = function(state)
+		Flags.AutoFarm = state
+		Window:Notify({
+			Title    = "Auto Farm",
+			Text     = state and "Enabled" or "Disabled",
+			Icon     = state and "flask-conical" or "flask",
+			Duration = 2,
+		})
+	end,
+})
+
 local walkspeed = MainTab:AddSlider({
 	Title    = "Walk Speed",
 	Icon     = "activity",
@@ -81,6 +99,18 @@ MainTab:AddButton({
 	Tooltip  = "Fires Window:Notify as a demo",
 	Callback = function()
 		Window:Notify({Title="Pressed", Text="You pressed the custom button!"})
+	end,
+})
+
+MainTab:AddButton({
+	Title    = "Rebuild Item Cache",
+	Subtitle = "Rescans the workspace for farmable items",
+	Icon     = "refresh-cw",
+	Text     = "Rebuild",
+	Beta     = true,
+	Tooltip  = "New scan logic, hasn't been tested on every map yet",
+	Callback = function()
+		Window:Notify({Title="Item Cache", Text="Rebuilt", Duration=2})
 	end,
 })
 
